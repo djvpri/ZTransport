@@ -1,0 +1,10 @@
+{
+  "name": "Z-Trans",
+  "short_name": "Z-Trans",
+  "description": "Tiket & manajemen bus",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B1120",
+  "theme_color": "#f5a524",
+  "icons": []
+}
