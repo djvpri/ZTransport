@@ -1,0 +1,248 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// PO bus. Di ekosistem, record lain menyimpan tenantId String — tabel ini
+// menyimpan nama/config PO-nya. Satu instance Z-Trans bisa melayani banyak PO.
+model Tenant {
+  id        String   @id @default(cuid())
+  nama      String
+  slug      String   @unique
+  loket     String?  // nama loket utama
+  telepon   String?
+  alamat    String?
+  createdAt DateTime @default(now())
+
+  bus     Bus[]
+  rute    Rute[]
+  jadwal  Jadwal[]
+  trip    Trip[]
+  booking Booking[]
+  paket   Paket[]
+}
+
+enum KelasBus {
+  EKONOMI
+  EXECUTIVE
+  SLEEPER
+}
+
+model Bus {
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  nama       String   // "Executive 2-2"
+  plat       String
+  kelas      KelasBus @default(EKONOMI)
+  layout     String   @default("2-2") // "2-2" | "2-3" | "2-1" (sleeper)
+  totalKursi Int      @default(32)
+  aktif      Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  jadwal Jadwal[]
+  trip   Trip[]
+
+  @@index([tenantId])
+}
+
+model Rute {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  nama      String   // "Badau - Pontianak"
+  asal      String
+  tujuan    String
+  aktif     Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  titik  TitikHenti[]
+  tarif  Tarif[]
+  jadwal Jadwal[]
+  trip   Trip[]
+
+  @@index([tenantId])
+}
+
+// Titik naik/turun sepanjang rute (untuk harga per segmen).
+model TitikHenti {
+  id      String @id @default(cuid())
+  ruteId  String
+  rute    Rute   @relation(fields: [ruteId], references: [id], onDelete: Cascade)
+  nama    String
+  kota    String
+  urutan  Int
+
+  @@index([ruteId])
+}
+
+// Harga per segmen: turun di titik "ke" berapa. Kalau kosong, pakai tarif penuh.
+model Tarif {
+  id     String  @id @default(cuid())
+  ruteId String
+  rute   Rute    @relation(fields: [ruteId], references: [id], onDelete: Cascade)
+  dari   String  // nama titik naik (default: asal)
+  ke     String  // nama titik turun
+  harga  Decimal @db.Decimal(12, 2)
+
+  @@index([ruteId])
+}
+
+enum HariMinggu {
+  SEN
+  SEL
+  RAB
+  KAM
+  JUM
+  SAB
+  MIN
+}
+
+// Template jadwal berulang. Trip harian dibuat dari sini.
+model Jadwal {
+  id        String       @id @default(cuid())
+  tenantId  String
+  tenant    Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  ruteId    String
+  rute      Rute         @relation(fields: [ruteId], references: [id], onDelete: Cascade)
+  busId     String
+  bus       Bus          @relation(fields: [busId], references: [id], onDelete: Cascade)
+  jam       String       // "06:00"
+  hari      HariMinggu[] // hari aktif; kosong = tiap hari
+  aktif     Boolean      @default(true)
+  createdAt DateTime     @default(now())
+
+  trip Trip[]
+
+  @@index([tenantId])
+}
+
+enum StatusTrip {
+  TEPAT     // terjadwal, tepat waktu
+  BOARDING  // sedang naik
+  BERANGKAT // sudah jalan
+  PENUH     // kursi habis
+  BATAL
+}
+
+// Instance keberangkatan pada tanggal tertentu. Kursi dikunci di level Trip.
+model Trip {
+  id        String     @id @default(cuid())
+  tenantId  String
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  jadwalId  String?
+  jadwal    Jadwal?    @relation(fields: [jadwalId], references: [id], onDelete: SetNull)
+  ruteId    String
+  rute      Rute       @relation(fields: [ruteId], references: [id], onDelete: Cascade)
+  busId     String
+  bus       Bus        @relation(fields: [busId], references: [id], onDelete: Cascade)
+  tanggal   DateTime   @db.Date
+  jam       String
+  status    StatusTrip @default(TEPAT)
+  sopir     String?
+  kernet    String?
+  createdAt DateTime   @default(now())
+
+  booking Booking[]
+  tiket   Tiket[]
+  paket   Paket[]
+
+  @@unique([jadwalId, tanggal])
+  @@index([tenantId, tanggal])
+}
+
+enum Channel {
+  LOKET
+  WA
+  ONLINE
+  AGEN
+}
+
+enum StatusBayar {
+  BELUM
+  LUNAS
+}
+
+model Booking {
+  id          String      @id @default(cuid())
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tripId      String
+  trip        Trip        @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  kode        String      @unique // kode booking, mis "KR6A2F"
+  namaPemesan String
+  hpPemesan   String?
+  channel     Channel     @default(LOKET)
+  totalHarga  Decimal     @db.Decimal(12, 2)
+  statusBayar StatusBayar @default(LUNAS)
+  metodeBayar String?     // TUNAI | TRANSFER | QRIS
+  createdBy   String?     // email kasir dari SSO
+  createdAt   DateTime    @default(now())
+
+  tiket Tiket[]
+
+  @@index([tenantId])
+  @@index([tripId])
+}
+
+enum StatusBoarding {
+  BELUM
+  BOARDED
+}
+
+model Tiket {
+  id             String         @id @default(cuid())
+  bookingId      String
+  booking        Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  tripId         String
+  trip           Trip           @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  kursi          String         // "12A" atau "12"
+  namaPenumpang  String
+  hpPenumpang    String?
+  naikDi         String?
+  turunDi        String?
+  harga          Decimal        @db.Decimal(12, 2)
+  kode           String         @unique // kode tiket untuk QR boarding
+  statusBoarding StatusBoarding @default(BELUM)
+  boardedAt      DateTime?
+  createdAt      DateTime       @default(now())
+
+  // Satu kursi hanya bisa dipesan sekali per trip → kunci kursi.
+  @@unique([tripId, kursi])
+  @@index([bookingId])
+}
+
+enum StatusPaket {
+  DITERIMA // masuk gudang/loket
+  DIKIRIM  // sudah naik bus
+  SAMPAI   // sampai tujuan, menunggu diambil
+  DIAMBIL  // sudah diambil penerima
+}
+
+model Paket {
+  id          String      @id @default(cuid())
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tripId      String?
+  trip        Trip?       @relation(fields: [tripId], references: [id], onDelete: SetNull)
+  resi        String      @unique
+  pengirim    String
+  hpPengirim  String?
+  penerima    String
+  hpPenerima  String?
+  tujuan      String
+  isi         String?
+  berat       Decimal?    @db.Decimal(8, 2) // kg
+  koli        Int         @default(1)
+  tarif       Decimal     @db.Decimal(12, 2)
+  status      StatusPaket @default(DITERIMA)
+  createdBy   String?
+  createdAt   DateTime    @default(now())
+
+  @@index([tenantId])
+  @@index([status])
+}

@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+body { background: #0B1120; color: #f1f5f9; }
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600;700&display=swap');
+.font-display { font-family: 'Oswald', system-ui, sans-serif; }
+
+/* Kelas khusus cetak thermal — tersembunyi di layar, muncul saat print. */
+@media print {
+  body * { visibility: hidden; }
+  .cetak-area, .cetak-area * { visibility: visible; }
+  .cetak-area { position: absolute; left: 0; top: 0; width: 100%; }
+  .no-print { display: none !important; }
+}
