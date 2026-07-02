@@ -61,8 +61,14 @@ export default function Dashboard({ po, loket, kasir, stat, trips }: Props) {
               <p className="text-xs text-slate-500 truncate">{loket} · {kasir}</p>
             </div>
           </div>
-          <div className="grid h-9 w-9 place-items-center rounded-full bg-slate-800 text-amber-300 text-sm font-semibold">
-            {kasir?.[0]?.toUpperCase() || 'U'}
+          <div className="flex items-center gap-2">
+            <button onClick={() => router.push('/master')} title="Data Master"
+              className="grid h-9 w-9 place-items-center rounded-lg border border-slate-700 text-slate-400 hover:text-amber-300 hover:border-slate-600">
+              ⚙️
+            </button>
+            <div className="grid h-9 w-9 place-items-center rounded-full bg-slate-800 text-amber-300 text-sm font-semibold">
+              {kasir?.[0]?.toUpperCase() || 'U'}
+            </div>
           </div>
         </div>
       </header>
