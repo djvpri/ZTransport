@@ -6,10 +6,19 @@ const p = new PrismaClient()
 async function seed() {
   console.log('Seeding Z-Trans...')
 
+  const planExpires = new Date(); planExpires.setDate(planExpires.getDate() + 30)
+
   const tenant = await p.tenant.upsert({
     where: { slug: 'kapuas-raya' },
     update: {},
-    create: { nama: 'PO Kapuas Raya', slug: 'kapuas-raya', loket: 'Loket Badau', telepon: '0812-0000-0000' },
+    create: { nama: 'PO Kapuas Raya', slug: 'kapuas-raya', loket: 'Loket Badau', telepon: '0812-0000-0000', plan: 'pro', planExpires, isActive: true },
+  })
+
+  // Demo tenant free
+  await p.tenant.upsert({
+    where: { slug: 'demo-po' },
+    update: {},
+    create: { nama: 'Demo PO', slug: 'demo-po', plan: 'free', isActive: true },
   })
 
   const busData = [

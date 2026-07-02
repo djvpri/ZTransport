@@ -10,13 +10,16 @@ datasource db {
 // PO bus. Di ekosistem, record lain menyimpan tenantId String — tabel ini
 // menyimpan nama/config PO-nya. Satu instance Z-Trans bisa melayani banyak PO.
 model Tenant {
-  id        String   @id @default(cuid())
-  nama      String
-  slug      String   @unique
-  loket     String?  // nama loket utama
-  telepon   String?
-  alamat    String?
-  createdAt DateTime @default(now())
+  id         String    @id @default(cuid())
+  nama       String
+  slug       String    @unique
+  loket      String?   // nama loket utama
+  telepon    String?
+  alamat     String?
+  plan       String    @default("free") // free|basic|pro|enterprise
+  planExpires DateTime?
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
 
   bus     Bus[]
   rute    Rute[]
@@ -214,6 +217,15 @@ model Tiket {
   // Satu kursi hanya bisa dipesan sekali per trip → kunci kursi.
   @@unique([tripId, kursi])
   @@index([bookingId])
+}
+
+// Preferensi user (tanpa User model — email sebagai identifier dari SSO).
+model UserPref {
+  id       String @id @default(cuid())
+  email    String @unique // dari SSO ZOne
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }
 
 enum StatusPaket {

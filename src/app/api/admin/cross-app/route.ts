@@ -85,11 +85,26 @@ export async function POST(req: NextRequest) {
     }
 
     // ZTransport tidak punya User model — user dikelola via ZOne
-    if (['create', 'delete', 'reactivate', 'updateRole', 'moveTenant', 'updatePlan', 'reactivateTenant'].includes(action)) {
-      return NextResponse.json({
-        success: true,
-        note: 'ZTransport tidak memiliki User/plan lokal. User & tenant dikelola via ZOne SSO.',
+    // ZTransport sekarang punya plan/isActive
+    if (action === 'updatePlan') {
+      if (!data?.tenantId || !data?.plan) return NextResponse.json({ error: 'tenantId & plan wajib' }, { status: 400 })
+      await prisma.tenant.update({
+        where: { id: data.tenantId },
+        data: {
+          plan: data.plan,
+          planExpires: data.planExpires ? new Date(data.planExpires) : null,
+        },
       })
+      return NextResponse.json({ success: true })
+    }
+
+    if (action === 'reactivateTenant') {
+      if (!data?.tenantId) return NextResponse.json({ error: 'tenantId wajib' }, { status: 400 })
+      await prisma.tenant.update({
+        where: { id: data.tenantId },
+        data: { isActive: true },
+      })
+      return NextResponse.json({ success: true })
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })

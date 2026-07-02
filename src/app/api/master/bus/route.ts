@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/session'
 import { resolveTenant } from '@/lib/tenant'
+import { enforceBusLimit } from '@/lib/enforce'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,8 +16,15 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   if (!(await getSession())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await getSession()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const tenant = await resolveTenant(req)
   if (!tenant) return NextResponse.json({ error: 'Tenant tidak ditemukan' }, { status: 404 })
+
+  // Plan enforcement
+  const check = await enforceBusLimit(tenant.id)
+  if (!check.allowed) return NextResponse.json({ error: check.reason, limit: check.limit, current: check.current }, { status: 403 })
+
   const b = await req.json()
   if (!b.nama || !b.plat) return NextResponse.json({ error: 'Nama & plat wajib' }, { status: 400 })
   const bus = await prisma.bus.create({

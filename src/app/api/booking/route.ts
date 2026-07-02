@@ -14,7 +14,8 @@ export async function POST(req: Request) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    const body = await req.json()
+    const check = await enforceBookingLimit(tenant.id, new Date()); if (!check.allowed) return NextResponse.json({ error: check.reason }, { status: 403 })
+  const body = await req.json()
     const { tripId, penumpang, channel, metodeBayar, hpPemesan, namaPemesan } = body
     // penumpang: [{ kursi, nama, hp?, turunDi?, harga }]
 

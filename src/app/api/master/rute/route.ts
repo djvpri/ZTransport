@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/session'
 import { resolveTenant } from '@/lib/tenant'
+import { enforceRuteLimit } from '@/lib/enforce'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,6 +30,10 @@ export async function POST(req: Request) {
   if (!(await getSession())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const tenant = await resolveTenant(req)
   if (!tenant) return NextResponse.json({ error: 'Tenant tidak ditemukan' }, { status: 404 })
+
+  // Plan enforcement
+  const check = await enforceRuteLimit(tenant.id)
+  if (!check.allowed) return NextResponse.json({ error: check.reason, limit: check.limit, current: check.current }, { status: 403 })
 
   const b = await req.json()
   const titik: string[] = (b.titik || []).map((t: string) => t.trim()).filter(Boolean)
