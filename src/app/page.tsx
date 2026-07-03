@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { getPlanLimits, getTenantPlanInfo } from '@/lib/pricing'
+import { isTenantMember } from '@/lib/tenant'
 import Dashboard from './Dashboard'
 import { BusFrontFill, SlashCircleFill, Award, GearFill, XLg, TicketFill, ReceiptCutoff, BoxSeam } from 'react-bootstrap-icons'
 
@@ -13,6 +14,11 @@ export default async function Home() {
 
   const pref = await prisma.userPref.findUnique({ where: { email: session.email } })
   if (!pref) redirect('/pilih-tenant')
+
+  // Pertahanan berlapis: UserPref seharusnya cuma menunjuk tenant yang user
+  // ini anggotanya (dijamin di /api/tenants/select), tapi verifikasi ulang
+  // di sini juga supaya tidak diam-diam percaya UserPref lama begitu saja.
+  if (!(await isTenantMember(pref.tenantId, session.email))) redirect('/pilih-tenant')
 
   const tenant = await prisma.tenant.findUnique({ where: { id: pref.tenantId } })
   if (!tenant) redirect('/pilih-tenant')

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/session'
+import { isTenantMember } from '@/lib/tenant'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,6 +19,9 @@ export async function POST(req: Request) {
     include: { trip: { include: { rute: true } } },
   })
   if (!tiket) return NextResponse.json({ valid: false, error: 'Tiket tidak ditemukan' }, { status: 404 })
+  if (!(await isTenantMember(tiket.trip.tenantId, session.email))) {
+    return NextResponse.json({ valid: false, error: 'Tidak punya akses ke tiket ini' }, { status: 403 })
+  }
 
   if (tiket.statusBoarding === 'BOARDED') {
     return NextResponse.json({

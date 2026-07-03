@@ -2,15 +2,15 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/session'
 import { kodeBooking } from '@/lib/seat'
+import { resolveTenant, isTenantMember } from '@/lib/tenant'
 
 export const dynamic = 'force-dynamic'
 
-// GET /api/paket?tenant=slug — daftar paket (kargo titipan)
+// GET /api/paket — daftar paket (kargo titipan) milik tenant aktif user
 export async function GET(req: Request) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const slug = new URL(req.url).searchParams.get('tenant') || 'kapuas-raya'
-  const tenant = await prisma.tenant.findUnique({ where: { slug } })
+  const tenant = await resolveTenant(req, session)
   if (!tenant) return NextResponse.json({ error: 'Tenant tidak ditemukan' }, { status: 404 })
 
   const paket = await prisma.paket.findMany({
@@ -26,11 +26,10 @@ export async function POST(req: Request) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   try {
-    const b = await req.json()
-    const slug = b.tenant || 'kapuas-raya'
-    const tenant = await prisma.tenant.findUnique({ where: { slug } })
+    const tenant = await resolveTenant(req, session)
     if (!tenant) return NextResponse.json({ error: 'Tenant tidak ditemukan' }, { status: 404 })
 
+    const b = await req.json()
     const paket = await prisma.paket.create({
       data: {
         tenantId: tenant.id,
@@ -55,12 +54,21 @@ export async function POST(req: Request) {
   }
 }
 
-// PATCH /api/paket — ubah status (DITERIMA/DIKIRIM/SAMPAI/DIAMBIL)
+// PATCH /api/paket — ubah status (DITERIMA/DIKIRIM/SAMPAI/DIAMBIL).
+// Wajib verifikasi paket ini milik tenant yang usernya anggota — tanpa ini,
+// siapa pun yang tahu kode resi bisa ubah status paket PO lain.
 export async function PATCH(req: Request) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { resi, status } = await req.json()
   if (!resi || !status) return NextResponse.json({ error: 'resi & status wajib' }, { status: 400 })
+
+  const paket = await prisma.paket.findUnique({ where: { resi } })
+  if (!paket) return NextResponse.json({ error: 'Paket tidak ditemukan' }, { status: 404 })
+  if (!(await isTenantMember(paket.tenantId, session.email))) {
+    return NextResponse.json({ error: 'Tidak punya akses ke paket ini' }, { status: 403 })
+  }
+
   await prisma.paket.update({ where: { resi }, data: { status } })
   return NextResponse.json({ success: true })
 }

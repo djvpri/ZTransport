@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/session'
 import { buildSeatLayout } from '@/lib/seat'
+import { isTenantMember } from '@/lib/tenant'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,6 +21,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     },
   })
   if (!trip) return NextResponse.json({ error: 'Trip tidak ditemukan' }, { status: 404 })
+  if (!(await isTenantMember(trip.tenantId, session.email))) {
+    return NextResponse.json({ error: 'Tidak punya akses ke trip ini' }, { status: 403 })
+  }
 
   const layout = buildSeatLayout(trip.bus.layout, trip.bus.totalKursi)
   const terisi = Object.fromEntries(trip.tiket.map((t: any) => [t.kursi, t.namaPenumpang]))

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/session'
 import { kodeBooking } from '@/lib/seat'
 import { enforceBookingLimit } from '@/lib/enforce'
+import { isTenantMember } from '@/lib/tenant'
 
 export const dynamic = 'force-dynamic'
 
@@ -102,6 +103,9 @@ export async function GET(req: Request) {
     },
   })
   if (!booking) return NextResponse.json({ error: 'Booking tidak ditemukan' }, { status: 404 })
+  if (!(await isTenantMember(booking.tenantId, session.email))) {
+    return NextResponse.json({ error: 'Tidak punya akses ke booking ini' }, { status: 403 })
+  }
 
   return NextResponse.json({
     kode: booking.kode,

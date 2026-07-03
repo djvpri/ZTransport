@@ -1,18 +1,16 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/session'
+import { resolveTenant } from '@/lib/tenant'
 
 export const dynamic = 'force-dynamic'
 
-// Ringkasan dashboard: trip hari ini + statistik. tenant diambil dari query
-// (nanti bisa dari preferensi user / SSO business_id).
+// Ringkasan dashboard: trip hari ini + statistik.
 export async function GET(req: Request) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const url = new URL(req.url)
-  const slug = url.searchParams.get('tenant') || 'kapuas-raya'
-  const tenant = await prisma.tenant.findUnique({ where: { slug } })
+  const tenant = await resolveTenant(req, session)
   if (!tenant) return NextResponse.json({ error: 'Tenant tidak ditemukan' }, { status: 404 })
 
   const today = new Date(); today.setHours(0, 0, 0, 0)

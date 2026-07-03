@@ -33,6 +33,22 @@ async function migrate() {
 
   await run(`CREATE TABLE IF NOT EXISTS "UserPref" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),email TEXT NOT NULL UNIQUE,"tenantId" TEXT NOT NULL,"createdAt" TIMESTAMP NOT NULL DEFAULT now(),CONSTRAINT "UserPref_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"(id) ON DELETE CASCADE)`)
 
+  // TenantMember: satu-satunya sumber otorisasi akses tenant (lib/tenant.ts).
+  await run(`CREATE TABLE IF NOT EXISTS "TenantMember" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),"tenantId" TEXT NOT NULL,email TEXT NOT NULL,role TEXT NOT NULL DEFAULT 'owner',"createdAt" TIMESTAMP NOT NULL DEFAULT now(),CONSTRAINT "TenantMember_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"(id) ON DELETE CASCADE)`)
+  await run(`DO $x$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='TenantMember_tenantId_email_key') THEN ALTER TABLE "TenantMember" ADD CONSTRAINT "TenantMember_tenantId_email_key" UNIQUE ("tenantId", email); END IF; END $x$`)
+  await run(`CREATE INDEX IF NOT EXISTS "TenantMember_email_idx" ON "TenantMember"(email)`)
+
+  // Backfill: siapa pun yang sudah pernah pilih tenant (UserPref) otomatis
+  // jadi owner member tenant itu — supaya user lama tidak kehilangan akses
+  // saat sistem membership ini pertama kali diaktifkan.
+  await run(`INSERT INTO "TenantMember" (id, "tenantId", email, role) SELECT gen_random_uuid(), "tenantId", email, 'owner' FROM "UserPref" ON CONFLICT ("tenantId", email) DO NOTHING`)
+
+  // Grandfather tambahan: pastikan owner produksi 'kapuas-raya' tidak terkunci
+  // keluar saat sistem membership ini pertama kali aktif (jaga-jaga kalau
+  // belum pernah pilih tenant lewat /pilih-tenant sama sekali).
+  const bootstrapEmail = (process.env.SEED_OWNER_EMAIL || 'sentarummedia@gmail.com').replace(/'/g, "''")
+  await run(`INSERT INTO "TenantMember" (id, "tenantId", email, role) SELECT gen_random_uuid(), id, '${bootstrapEmail}', 'owner' FROM "Tenant" WHERE slug='kapuas-raya' ON CONFLICT ("tenantId", email) DO NOTHING`)
+
   await run(`CREATE TABLE IF NOT EXISTS "Bus" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),"tenantId" TEXT NOT NULL,nama TEXT NOT NULL,plat TEXT NOT NULL,kelas "KelasBus" NOT NULL DEFAULT 'EKONOMI',layout TEXT NOT NULL DEFAULT '2-2',"totalKursi" INT NOT NULL DEFAULT 32,aktif BOOLEAN NOT NULL DEFAULT true,"createdAt" TIMESTAMP NOT NULL DEFAULT now(),CONSTRAINT "Bus_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"(id) ON DELETE CASCADE)`)
   await run(`CREATE INDEX IF NOT EXISTS "Bus_tenantId_idx" ON "Bus"("tenantId")`)
 

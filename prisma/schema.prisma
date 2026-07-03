@@ -21,12 +21,28 @@ model Tenant {
   isActive   Boolean   @default(true)
   createdAt  DateTime  @default(now())
 
+  member  TenantMember[]
   bus     Bus[]
   rute    Rute[]
   jadwal  Jadwal[]
   trip    Trip[]
   booking Booking[]
   paket   Paket[]
+}
+
+// Satu-satunya sumber otorisasi akses tenant: email boleh akses tenant kalau
+// (dan hanya kalau) ada baris di sini. JANGAN pernah percaya ?tenant=slug
+// dari request tanpa verifikasi lewat tabel ini (lihat lib/tenant.ts).
+model TenantMember {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email     String
+  role      String   @default("owner") // owner | staff (untuk fitur undang di masa depan)
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, email])
+  @@index([email])
 }
 
 enum KelasBus {
