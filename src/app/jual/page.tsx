@@ -2,6 +2,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { formatRupiah } from '@/lib/seat'
+import { BusFrontFill } from 'react-bootstrap-icons'
 
 type TripDetail = {
   trip: { id: string; jam: string; dari: string; ke: string; bus: string; plat: string; status: string }
@@ -111,7 +112,7 @@ function JualInner() {
       {/* Seat map */}
       <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 mb-4">
         <div className="flex items-center justify-between mb-4 text-xs text-slate-500">
-          <span>Depan / Sopir 🚍</span>
+          <span className="flex items-center gap-1.5">Depan / Sopir <BusFrontFill size={13} /></span>
           <div className="flex gap-3">
             <Legend c="bg-slate-700" t="Kosong" /><Legend c="bg-amber-400" t="Dipilih" /><Legend c="bg-rose-500/40" t="Terisi" />
           </div>

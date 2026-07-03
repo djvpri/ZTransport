@@ -1,10 +1,12 @@
+import { BusFrontFill } from 'react-bootstrap-icons'
+
 const ZONE_URL = process.env.NEXT_PUBLIC_ZONE_URL || 'https://zone.zomet.my.id'
 
 export default function LoginPage() {
   return (
     <div className="min-h-screen grid place-items-center px-4">
       <div className="w-full max-w-sm text-center">
-        <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-2xl bg-amber-400 text-slate-900 text-2xl">🚌</div>
+        <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-2xl bg-amber-400 text-slate-900"><BusFrontFill size={26} /></div>
         <h1 className="font-display text-2xl tracking-wide">Z-TRANS</h1>
         <p className="mt-1 text-sm text-slate-400">Tiket &amp; manajemen bus</p>
         <a

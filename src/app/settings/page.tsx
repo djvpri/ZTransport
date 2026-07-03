@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { BusFrontFill, Signpost, CalendarEvent, TicketFill, ReceiptCutoff, BoxSeam, SlashCircleFill, Award } from 'react-bootstrap-icons'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -44,7 +45,7 @@ export default function SettingsPage() {
   if (!tenant) return <div className="min-h-screen bg-slate-900 p-6 text-slate-400">Loading...</div>
 
   const plan = tenant.plan || 'free'
-  const planLabel = ({ free: '🥉 Gratis', basic: '🥈 Basic', pro: '🥇 Pro', enterprise: '💎 Enterprise' } as Record<string, string>)[plan] || plan
+  const planLabel = ({ free: 'Gratis', basic: 'Basic', pro: 'Pro', enterprise: 'Enterprise' } as Record<string, string>)[plan] || plan
   const expired = tenant.plan !== 'free' && tenant.planExpires && new Date(tenant.planExpires) < new Date()
   const planExpires = tenant.planExpires ? new Date(tenant.planExpires).toLocaleDateString('id-ID') : '-'
 
@@ -68,9 +69,9 @@ export default function SettingsPage() {
           <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Paket & Langganan</p>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white font-semibold text-lg">{planLabel}</p>
+              <p className="text-white font-semibold text-lg flex items-center gap-1.5"><Award size={16} /> {planLabel}</p>
               {expired ? (
-                <p className="text-red-400 text-xs mt-1">⛔ Kedaluwarsa {planExpires}</p>
+                <p className="text-red-400 text-xs mt-1 flex items-center gap-1"><SlashCircleFill size={10} /> Kedaluwarsa {planExpires}</p>
               ) : plan !== 'free' ? (
                 <p className="text-slate-400 text-xs mt-1">Berlaku hingga {planExpires}</p>
               ) : (
@@ -121,15 +122,15 @@ export default function SettingsPage() {
           <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Batas Pemakaian ({plan})</p>
           <div className="grid grid-cols-2 gap-3 text-sm">
             {[
-              ['🚌 Bus', tenant.limits?.maxBus || '?'],
-              ['🛣️ Rute', tenant.limits?.maxRute || '?'],
-              ['📅 Jadwal', tenant.limits?.maxJadwal || '?'],
-              ['🎫 Trip/hari', tenant.limits?.maxTripPerDay || '?'],
-              ['🧾 Booking/hari', tenant.limits?.maxBookingPerDay || '?'],
-              ['📦 Paket/hari', tenant.limits?.maxPaketPerDay || '?'],
-            ].map(([label, val]) => (
+              [BusFrontFill, 'Bus', tenant.limits?.maxBus || '?'],
+              [Signpost, 'Rute', tenant.limits?.maxRute || '?'],
+              [CalendarEvent, 'Jadwal', tenant.limits?.maxJadwal || '?'],
+              [TicketFill, 'Trip/hari', tenant.limits?.maxTripPerDay || '?'],
+              [ReceiptCutoff, 'Booking/hari', tenant.limits?.maxBookingPerDay || '?'],
+              [BoxSeam, 'Paket/hari', tenant.limits?.maxPaketPerDay || '?'],
+            ].map(([Icon, label, val]: any) => (
               <div key={label} className="bg-slate-900 rounded-xl px-3 py-2.5">
-                <p className="text-slate-400 text-xs">{label}</p>
+                <p className="text-slate-400 text-xs flex items-center gap-1.5"><Icon size={11} /> {label}</p>
                 <p className="text-white font-semibold">{val}</p>
               </div>
             ))}

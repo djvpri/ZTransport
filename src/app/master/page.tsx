@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatRupiah } from '@/lib/seat'
+import { GearFill } from 'react-bootstrap-icons'
 
 type Tab = 'bus' | 'rute' | 'jadwal'
 const KELAS = ['EKONOMI', 'EXECUTIVE', 'SLEEPER']
@@ -42,7 +43,7 @@ export default function MasterPage() {
             <h1 className="font-display text-lg tracking-wide">Data Master</h1>
           </div>
           <button onClick={generateTrip} className="rounded-lg bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-amber-300">
-            ⚙️ Buat Trip Hari Ini
+            <GearFill size={14} className="inline mr-1.5" />Buat Trip Hari Ini
           </button>
         </div>
         <div className="mx-auto max-w-4xl px-4 flex gap-1">

@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { CameraFill, CheckCircleFill, SlashCircleFill } from 'react-bootstrap-icons'
 
 type Hasil = { valid: boolean; penumpang?: string; kursi?: string; turunDi?: string; rute?: string; error?: string }
 
@@ -62,7 +63,7 @@ export default function BoardingPage() {
 
         {!scanning && (
           <button onClick={mulaiScan} className="w-full rounded-xl bg-amber-400 py-3 font-semibold text-slate-900">
-            📷 Mulai Scan QR
+            <CameraFill size={15} className="inline mr-1.5" />Mulai Scan QR
           </button>
         )}
 
@@ -74,7 +75,7 @@ export default function BoardingPage() {
 
         {hasil && (
           <div className={`rounded-2xl p-5 border ${hasil.valid ? 'border-teal-500/40 bg-teal-500/10' : 'border-rose-500/40 bg-rose-500/10'}`}>
-            <div className="text-3xl mb-2">{hasil.valid ? '✅' : '⛔'}</div>
+            <div className="mb-2 flex justify-center">{hasil.valid ? <CheckCircleFill size={30} className="text-emerald-500" /> : <SlashCircleFill size={30} className="text-rose-500" />}</div>
             {hasil.valid ? (
               <>
                 <div className="font-display text-2xl text-teal-300">Boleh Naik</div>

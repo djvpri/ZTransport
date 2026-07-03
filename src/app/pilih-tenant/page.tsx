@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { BusFrontFill, Award } from 'react-bootstrap-icons'
 
 export default function PilihTenantPage() {
   const router = useRouter()
@@ -66,7 +67,7 @@ export default function PilihTenantPage() {
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-amber-400 text-slate-900 text-2xl">🚌</div>
+          <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-amber-400 text-slate-900"><BusFrontFill size={26} /></div>
           <h1 className="text-xl font-bold text-white">Z-TRANS</h1>
           <p className="text-sm text-slate-400 mt-1">Pilih atau buat PO Bus</p>
         </div>
@@ -87,7 +88,7 @@ export default function PilihTenantPage() {
               >
                 <p className="text-white font-medium">{t.nama}</p>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  {t.plan === 'free' ? '🥉 Gratis' : t.plan === 'basic' ? '🥈 Basic' : t.plan === 'pro' ? '🥇 Pro' : '💎 Enterprise'}
+                  <Award size={11} className="inline mr-1" />{t.plan === 'free' ? 'Gratis' : t.plan === 'basic' ? 'Basic' : t.plan === 'pro' ? 'Pro' : 'Enterprise'}
                   {t.loket && ` · ${t.loket}`}
                 </p>
               </button>
@@ -125,7 +126,7 @@ export default function PilihTenantPage() {
                 onClick={createTenant} disabled={loading || !newName.trim()}
                 className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-900 font-semibold rounded-xl py-3.5 transition-all active:scale-[0.98]"
               >
-                {loading ? 'Memproses...' : '🚌 Buat PO & Mulai'}
+                {loading ? 'Memproses...' : (<><BusFrontFill size={14} className="inline mr-1.5" />Buat PO & Mulai</>)}
               </button>
             </div>
           )}

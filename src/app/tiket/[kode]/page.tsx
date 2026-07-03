@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import QRCode from 'qrcode'
+import { CheckCircleFill, PrinterFill } from 'react-bootstrap-icons'
 
 type Data = {
   kode: string; po: string; loket: string; tanggal: string; jam: string
@@ -42,10 +43,10 @@ export default function CetakTiket() {
         <div className="mx-auto max-w-md px-4 py-3 flex items-center justify-between">
           <button onClick={() => router.push('/')} className="text-slate-400 text-sm">← Beranda</button>
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-teal-300">✓ Booking {data.kode}</span>
+            <span className="text-teal-300 flex items-center gap-1"><CheckCircleFill size={12} /> Booking {data.kode}</span>
           </div>
           <button onClick={() => window.print()} className="rounded-lg bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-900">
-            🖨️ Cetak
+            <PrinterFill size={14} className="inline mr-1.5" />Cetak
           </button>
         </div>
       </div>

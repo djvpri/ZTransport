@@ -1,6 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { formatRupiah } from '@/lib/seat'
+import { BusFrontFill, GearFill, PersonCircle, HouseDoorFill, TicketFill, BoxSeam, CameraFill } from 'react-bootstrap-icons'
 
 type Trip = {
   id: string; jam: string; dari: string; ke: string; via: string
@@ -52,7 +53,7 @@ export default function Dashboard({ po, loket, kasir, stat, trips }: Props) {
       <header className="sticky top-0 z-20 border-b border-slate-800/80 bg-[#0B1120]/90 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-amber-400 text-slate-900 text-lg">🚌</div>
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-amber-400 text-slate-900"><BusFrontFill size={20} /></div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="font-display text-lg tracking-wide leading-none">Z-TRANS</span>
@@ -64,7 +65,7 @@ export default function Dashboard({ po, loket, kasir, stat, trips }: Props) {
           <div className="flex items-center gap-2">
             <button onClick={() => router.push('/master')} title="Data Master"
               className="grid h-9 w-9 place-items-center rounded-lg border border-slate-700 text-slate-400 hover:text-amber-300 hover:border-slate-600">
-              ⚙️
+              <GearFill size={16} />
             </button>
             <div className="grid h-9 w-9 place-items-center rounded-full bg-slate-800 text-amber-300 text-sm font-semibold">
               {kasir?.[0]?.toUpperCase() || 'U'}
@@ -125,7 +126,7 @@ export default function Dashboard({ po, loket, kasir, stat, trips }: Props) {
                       </div>
                       <div className="text-xs text-slate-500 mt-0.5 truncate">via {t.via}</div>
                       <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-1.5">
-                        <span>🚌 {t.bus}</span><span>👤 {t.sopir}</span>
+                        <span className="flex items-center gap-1"><BusFrontFill size={11} /> {t.bus}</span><span className="flex items-center gap-1"><PersonCircle size={11} /> {t.sopir}</span>
                       </div>
                     </div>
                     <div className="w-32 shrink-0 hidden sm:block"><FillBar terisi={t.terisi} total={t.total} /></div>
@@ -144,14 +145,14 @@ export default function Dashboard({ po, loket, kasir, stat, trips }: Props) {
       <nav className="fixed bottom-0 inset-x-0 z-20 border-t border-slate-800 bg-[#0B1120]/95 backdrop-blur sm:hidden">
         <div className="grid grid-cols-4">
           {[
-            { label: 'Beranda', icon: '🏠', href: '/' },
-            { label: 'Jual', icon: '🎟️', href: '/jual' },
-            { label: 'Paket', icon: '📦', href: '/paket' },
-            { label: 'Boarding', icon: '📷', href: '/boarding' },
+            { label: 'Beranda', Icon: HouseDoorFill, href: '/' },
+            { label: 'Jual', Icon: TicketFill, href: '/jual' },
+            { label: 'Paket', Icon: BoxSeam, href: '/paket' },
+            { label: 'Boarding', Icon: CameraFill, href: '/boarding' },
           ].map((n) => (
             <button key={n.href} onClick={() => router.push(n.href)}
               className="flex flex-col items-center gap-1 py-2.5 text-slate-400 active:text-amber-400">
-              <span className="text-lg">{n.icon}</span>
+              <n.Icon size={19} />
               <span className="text-[10px] font-medium">{n.label}</span>
             </button>
           ))}

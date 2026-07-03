@@ -3,6 +3,7 @@ import { getSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { getPlanLimits, getTenantPlanInfo } from '@/lib/pricing'
 import Dashboard from './Dashboard'
+import { BusFrontFill, SlashCircleFill, Award, GearFill, XLg, TicketFill, ReceiptCutoff, BoxSeam } from 'react-bootstrap-icons'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,7 +40,7 @@ export default async function Home() {
       {/* Top bar */}
       <div className="bg-slate-800 border-b border-slate-700 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">🚌</span>
+          <BusFrontFill size={22} />
           <div>
             <h1 className="text-white font-semibold text-sm">{tenant.nama}</h1>
             <p className="text-[10px] text-slate-500">{tenant.loket || tenant.slug}</p>
@@ -47,24 +48,24 @@ export default async function Home() {
         </div>
         <div className="flex items-center gap-3">
           {planInfo.effectivePlan !== planInfo.plan && (
-            <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-1 rounded-md">⛔ Kedaluwarsa</span>
+            <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-1 rounded-md flex items-center gap-1"><SlashCircleFill size={10} /> Kedaluwarsa</span>
           )}
           <span className="text-[10px] bg-slate-700 text-slate-300 px-2 py-1 rounded-md">
-            {planInfo.plan === 'free' ? '🥉' : planInfo.plan === 'basic' ? '🥈' : planInfo.plan === 'pro' ? '🥇' : '💎'} {planInfo.plan}
+            <Award size={12} className="inline mr-1" />{planInfo.plan}
           </span>
-          <a href="/settings" className="text-slate-400 hover:text-white text-xs">⚙️</a>
+          <a href="/settings" className="text-slate-400 hover:text-white text-xs"><GearFill size={14} /></a>
           <form action="/login" method="get">
-            <button type="submit" className="text-xs text-slate-500 hover:text-slate-300">✕</button>
+            <button type="submit" className="text-xs text-slate-500 hover:text-slate-300"><XLg size={13} /></button>
           </form>
         </div>
       </div>
 
       {/* Plan usage bar */}
       <div className="bg-slate-800/50 border-b border-slate-700/50 px-4 py-2 flex gap-4 text-xs text-slate-400 overflow-x-auto">
-        <span>🎫 {trips.length}/{limits.maxTripPerDay} trip</span>
-        <span>🧾 {tiketTerjual}/{limits.maxBookingPerDay} tiket</span>
-        <span>📦 {paketMenunggu}/{limits.maxPaketPerDay} paket</span>
-        <span>🚌 {trips.length ? '∞' : `0/${limits.maxBus}`} bus</span>
+        <span className="flex items-center gap-1"><TicketFill size={11} /> {trips.length}/{limits.maxTripPerDay} trip</span>
+        <span className="flex items-center gap-1"><ReceiptCutoff size={11} /> {tiketTerjual}/{limits.maxBookingPerDay} tiket</span>
+        <span className="flex items-center gap-1"><BoxSeam size={11} /> {paketMenunggu}/{limits.maxPaketPerDay} paket</span>
+        <span className="flex items-center gap-1"><BusFrontFill size={11} /> {trips.length ? '∞' : `0/${limits.maxBus}`} bus</span>
       </div>
 
       <Dashboard
