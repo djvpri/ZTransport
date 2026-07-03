@@ -11,8 +11,9 @@ const HARI = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'] as const
 // Buat Trip untuk semua jadwal aktif yang berlaku di tanggal itu.
 // Idempoten: unique (jadwalId, tanggal) mencegah duplikat, jadi aman diulang.
 export async function POST(req: Request) {
-  if (!(await getSession())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const tenant = await resolveTenant(req)
+  const session = await getSession()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const tenant = await resolveTenant(req, session)
   if (!tenant) return NextResponse.json({ error: 'Tenant tidak ditemukan' }, { status: 404 })
 
   const body = await req.json().catch(() => ({}))

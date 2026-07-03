@@ -7,18 +7,18 @@ import { enforceBusLimit } from '@/lib/enforce'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: Request) {
-  if (!(await getSession())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const tenant = await resolveTenant(req)
+  const session = await getSession()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const tenant = await resolveTenant(req, session)
   if (!tenant) return NextResponse.json({ error: 'Tenant tidak ditemukan' }, { status: 404 })
   const bus = await prisma.bus.findMany({ where: { tenantId: tenant.id }, orderBy: { createdAt: 'desc' } })
   return NextResponse.json({ bus })
 }
 
 export async function POST(req: Request) {
-  if (!(await getSession())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const tenant = await resolveTenant(req)
+  const tenant = await resolveTenant(req, session)
   if (!tenant) return NextResponse.json({ error: 'Tenant tidak ditemukan' }, { status: 404 })
 
   // Plan enforcement

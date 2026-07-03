@@ -44,7 +44,7 @@ export default function SettingsPage() {
   if (!tenant) return <div className="min-h-screen bg-slate-900 p-6 text-slate-400">Loading...</div>
 
   const plan = tenant.plan || 'free'
-  const planLabel = { free: '🥉 Gratis', basic: '🥈 Basic', pro: '🥇 Pro', enterprise: '💎 Enterprise' }[plan] || plan
+  const planLabel = ({ free: '🥉 Gratis', basic: '🥈 Basic', pro: '🥇 Pro', enterprise: '💎 Enterprise' } as Record<string, string>)[plan] || plan
   const expired = tenant.plan !== 'free' && tenant.planExpires && new Date(tenant.planExpires) < new Date()
   const planExpires = tenant.planExpires ? new Date(tenant.planExpires).toLocaleDateString('id-ID') : '-'
 

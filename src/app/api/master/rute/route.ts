@@ -7,8 +7,9 @@ import { enforceRuteLimit } from '@/lib/enforce'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: Request) {
-  if (!(await getSession())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const tenant = await resolveTenant(req)
+  const session = await getSession()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const tenant = await resolveTenant(req, session)
   if (!tenant) return NextResponse.json({ error: 'Tenant tidak ditemukan' }, { status: 404 })
   const rute = await prisma.rute.findMany({
     where: { tenantId: tenant.id },
@@ -27,8 +28,9 @@ export async function GET(req: Request) {
 // Buat rute + titik henti + tarif per segmen dalam satu transaksi.
 // body: { nama?, titik: string[] (min 2), tarif: [{ dari, ke, harga }] }
 export async function POST(req: Request) {
-  if (!(await getSession())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const tenant = await resolveTenant(req)
+  const session = await getSession()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const tenant = await resolveTenant(req, session)
   if (!tenant) return NextResponse.json({ error: 'Tenant tidak ditemukan' }, { status: 404 })
 
   // Plan enforcement

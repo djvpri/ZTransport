@@ -1,16 +1,12 @@
 export const dynamic = "force-dynamic"
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-
-// Migration 2026-07-02: Dual secret support during transition
-const NEW_SECRET = process.env.CROSS_APP_SECRET || 'uurclTHL375CiZeWi2g4T3GczU2YNY9I1wzjlsVTgSk'
-const OLD_SECRET = 'z-ecosystem-admin-2026'
-const VALID_SECRETS = [NEW_SECRET, OLD_SECRET]
+import { getCrossAppSecret } from '@/lib/secrets'
 
 function checkAuth(req: NextRequest) {
   const auth = req.headers.get('authorization') || ''
   const token = auth.replace('Bearer ', '')
-  return VALID_SECRETS.includes(token)
+  return token === getCrossAppSecret()
 }
 
 export async function GET(req: NextRequest) {
@@ -25,9 +21,9 @@ export async function GET(req: NextRequest) {
       tenants: tenants.map(t => ({
         id: t.id,
         name: t.nama,
-        plan: 'pro', // ZTransport tidak punya plan tier
-        active: true,
-        expires_at: null,
+        plan: t.plan,
+        active: t.isActive,
+        expires_at: t.planExpires,
       })),
       users: [], // ZTransport tidak punya User model — SSO via ZOne
     })

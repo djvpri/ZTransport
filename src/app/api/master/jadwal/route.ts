@@ -6,8 +6,9 @@ import { resolveTenant } from '@/lib/tenant'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: Request) {
-  if (!(await getSession())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const tenant = await resolveTenant(req)
+  const session = await getSession()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const tenant = await resolveTenant(req, session)
   if (!tenant) return NextResponse.json({ error: 'Tenant tidak ditemukan' }, { status: 404 })
   const jadwal = await prisma.jadwal.findMany({
     where: { tenantId: tenant.id },
@@ -25,8 +26,9 @@ export async function GET(req: Request) {
 
 // body: { ruteId, busId, jam, hari?: HariMinggu[] }  (hari kosong = tiap hari)
 export async function POST(req: Request) {
-  if (!(await getSession())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const tenant = await resolveTenant(req)
+  const session = await getSession()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const tenant = await resolveTenant(req, session)
   if (!tenant) return NextResponse.json({ error: 'Tenant tidak ditemukan' }, { status: 404 })
   const b = await req.json()
   if (!b.ruteId || !b.busId || !b.jam) return NextResponse.json({ error: 'Rute, bus, dan jam wajib' }, { status: 400 })

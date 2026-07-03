@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getSession } from 'next-auth/react'
 
 export default function PilihTenantPage() {
   const router = useRouter()

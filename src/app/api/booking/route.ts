@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/session'
 import { kodeBooking } from '@/lib/seat'
+import { enforceBookingLimit } from '@/lib/enforce'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,8 +15,7 @@ export async function POST(req: Request) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    const check = await enforceBookingLimit(tenant.id, new Date()); if (!check.allowed) return NextResponse.json({ error: check.reason }, { status: 403 })
-  const body = await req.json()
+    const body = await req.json()
     const { tripId, penumpang, channel, metodeBayar, hpPemesan, namaPemesan } = body
     // penumpang: [{ kursi, nama, hp?, turunDi?, harga }]
 
@@ -28,6 +28,10 @@ export async function POST(req: Request) {
     if (trip.status === 'BERANGKAT' || trip.status === 'BATAL') {
       return NextResponse.json({ error: 'Trip sudah berangkat/batal' }, { status: 409 })
     }
+
+    // Plan enforcement — baru bisa dicek setelah tenantId diketahui dari trip
+    const check = await enforceBookingLimit(trip.tenantId, new Date())
+    if (!check.allowed) return NextResponse.json({ error: check.reason }, { status: 403 })
 
     const total = penumpang.reduce((s: number, p: any) => s + Number(p.harga || 0), 0)
     const kode = kodeBooking('B')

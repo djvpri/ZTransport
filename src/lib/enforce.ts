@@ -1,5 +1,5 @@
 import { prisma } from './prisma'
-import { getPlanLimits, getEffectivePlan } from './pricing'
+import { getPlanLimits } from './pricing'
 
 export type EnforceResult = { allowed: boolean; reason?: string; limit?: number; current?: number }
 
@@ -67,23 +67,4 @@ export async function enforcePaketLimit(tenantId: string, date: Date): Promise<E
   const count = await prisma.paket.count({ where: { tenantId, createdAt: { gte: startOfDay, lte: endOfDay } } })
   if (count >= limits.maxPaketPerDay) return { allowed: false, reason: `Batas paket/hari (${limits.maxPaketPerDay}) tercapai`, limit: limits.maxPaketPerDay, current: count }
   return { allowed: true }
-}
-
-export function getTenantPlanInfo(tenant: { plan: string | null; planExpires: Date | null }): {
-  plan: string
-  effectivePlan: string
-  isExpired: boolean
-  inGracePeriod: boolean
-  expiresAt: string | null
-} {
-  const effectivePlan = getEffectivePlan(tenant.plan, tenant.planExpires)
-  const plan = tenant.plan || 'free'
-  const expiresAt = tenant.planExpires?.toISOString() || null
-  
-  const now = Date.now()
-  const expTime = tenant.planExpires?.getTime() || 0
-  const isExpired = plan !== 'free' && expTime > 0 && expTime < now
-  const inGracePeriod = isExpired && (expTime + 7 * 86400000) > now
-
-  return { plan, effectivePlan, isExpired, inGracePeriod, expiresAt }
 }

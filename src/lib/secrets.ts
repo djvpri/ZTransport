@@ -1,12 +1,8 @@
-// Migration 2026-07-02: Dual secret support during transition
-export const NEW_SECRET = process.env.CROSS_APP_SECRET || 'uurclTHL375CiZeWi2g4T3GczU2YNY9I1wzjlsVTgSk'
-export const OLD_SECRET = 'z-ecosystem-admin-2026'
-const VALID_SECRETS = [NEW_SECRET, OLD_SECRET]
-
+// Tidak ada fallback hardcode — samakan CROSS_APP_SECRET dengan Z One & spoke lain.
+// (Nilai lama 'uurclTHL375...' dan 'z-ecosystem-admin-2026' pernah bocor di
+// repo publik lain di ekosistem ini — JANGAN pernah dipakai lagi sebagai fallback.)
 export function getCrossAppSecret(): string {
-  return NEW_SECRET
-}
-
-export function isValidCrossAppSecret(token: string): boolean {
-  return VALID_SECRETS.includes(token)
+  const s = process.env.CROSS_APP_SECRET
+  if (!s) throw new Error('CROSS_APP_SECRET belum di-set (samakan dengan Z One).')
+  return s
 }

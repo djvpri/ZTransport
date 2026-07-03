@@ -112,3 +112,22 @@ export function getPlanLimits(plan: string | null | undefined, planExpires: Date
   const effective = getEffectivePlan(plan, planExpires)
   return PLAN_LIMITS[effective]
 }
+
+export function getTenantPlanInfo(tenant: { plan: string | null; planExpires: Date | null }): {
+  plan: string
+  effectivePlan: string
+  isExpired: boolean
+  inGracePeriod: boolean
+  expiresAt: string | null
+} {
+  const effectivePlan = getEffectivePlan(tenant.plan, tenant.planExpires)
+  const plan = tenant.plan || 'free'
+  const expiresAt = tenant.planExpires?.toISOString() || null
+  
+  const now = Date.now()
+  const expTime = tenant.planExpires?.getTime() || 0
+  const isExpired = plan !== 'free' && expTime > 0 && expTime < now
+  const inGracePeriod = isExpired && (expTime + 7 * 86400000) > now
+
+  return { plan, effectivePlan, isExpired, inGracePeriod, expiresAt }
+}
