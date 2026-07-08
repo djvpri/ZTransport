@@ -9,6 +9,8 @@ RUN npm ci || npm install
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# prisma generate tidak butuh koneksi DB sungguhan — cukup dummy URL
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npx prisma generate && npm run build
 
 FROM base AS runner
