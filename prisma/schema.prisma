@@ -28,6 +28,7 @@ model Tenant {
   trip    Trip[]
   booking Booking[]
   paket   Paket[]
+  userPrefs UserPref[]
 }
 
 // Satu-satunya sumber otorisasi akses tenant: email boleh akses tenant kalau
