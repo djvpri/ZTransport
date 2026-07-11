@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { BusFrontFill, Signpost, CalendarEvent, TicketFill, ReceiptCutoff, BoxSeam, SlashCircleFill, Award } from 'react-bootstrap-icons'
+import { BusFrontFill, Signpost, CalendarEvent, TicketFill, ReceiptCutoff, BoxSeam, SlashCircleFill, Award, PersonFill } from 'react-bootstrap-icons'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -116,6 +116,20 @@ export default function SettingsPage() {
             {saving ? 'Menyimpan...' : 'Simpan'}
           </button>
         </div>
+
+        {/* Anggota */}
+        <button
+          onClick={() => router.push('/settings/member')}
+          className="w-full bg-slate-800 rounded-2xl p-4 border border-slate-700 flex items-center gap-4 hover:border-amber-500/50 transition text-left"
+        >
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 grid place-items-center">
+            <PersonFill size={18} className="text-amber-400" />
+          </div>
+          <div>
+            <p className="text-white text-sm font-semibold">Kelola Anggota</p>
+            <p className="text-xs text-slate-500">Tambah/hapus staff & akses PO</p>
+          </div>
+        </button>
 
         {/* Limits */}
         <div className="bg-slate-800 rounded-2xl p-4 border border-slate-700">
