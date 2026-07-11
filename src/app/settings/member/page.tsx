@@ -25,21 +25,21 @@ export default function MemberPage() {
       if (!res.ok) { flash('Gagal memuat anggota'); setLoading(false); return }
       const d = await res.json()
       setMembers(d.members || [])
+      // Ambil email saya dari session — fallback dari /api/sessions/me atau /api/tenants/me
+      if (!myEmail) {
+        try {
+          const s = await fetch('/api/tenants/me')
+          if (s.ok) {
+            const sd = await s.json()
+            if (sd.email) setMyEmail(sd.email)
+          }
+        } catch {}
+      }
     } catch { flash('Error memuat data') }
     setLoading(false)
   }
 
-  async function loadMe() {
-    try {
-      const res = await fetch('/api/sessions/me')
-      if (res.ok) {
-        const d = await res.json()
-        setMyEmail(d.email || '')
-      }
-    } catch {}
-  }
-
-  useEffect(() => { load(); loadMe() }, [])
+  useEffect(() => { load() }, [])
 
   useEffect(() => {
     const me = members.find(m => m.email === myEmail)

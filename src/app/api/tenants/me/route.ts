@@ -22,6 +22,7 @@ export async function GET() {
   if (!t) return NextResponse.json({ tenant: null })
 
   return NextResponse.json({
+    email: session.email,
     tenant: {
       ...t,
       planInfo: getTenantPlanInfo(t),
