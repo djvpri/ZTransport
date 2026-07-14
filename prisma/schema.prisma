@@ -40,6 +40,7 @@ model TenantMember {
   tenantId  String
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   email     String
+  nama      String?  // nama tampilan (dikirim ZOne saat tambah user)
   role      String   @default("owner") // owner | staff (untuk fitur undang di masa depan)
   createdAt DateTime @default(now())
 

@@ -27,8 +27,9 @@ export async function GET(req: NextRequest) {
         expires_at: t.planExpires,
       })),
       // ZTransport SSO-only: "user" = anggota tenant (TenantMember). Password
-      // tidak disimpan di sini (login lewat SSO ZOne).
-      users: members.map(m => ({ id: m.id, email: m.email, tenantId: m.tenantId, role: m.role, active: true })),
+      // tidak disimpan di sini (login lewat SSO ZOne). Nama jatuh ke bagian
+      // depan email kalau belum diisi, supaya tidak tampil "(tanpa nama)".
+      users: members.map(m => ({ id: m.id, email: m.email, name: m.nama || m.email.split('@')[0], tenantId: m.tenantId, role: m.role, active: true })),
     })
   } catch (error) {
     console.error('Cross-app GET error:', error)
@@ -120,16 +121,55 @@ export async function POST(req: NextRequest) {
       }
       const t = await prisma.tenant.findUnique({ where: { id: tenantId } })
       if (!t) return NextResponse.json({ error: 'Tenant tidak ditemukan' }, { status: 404 })
+      const nama = String(data?.name || '').trim() || null
       await prisma.tenantMember.upsert({
         where: { tenantId_email: { tenantId, email: em } },
-        update: {},
-        create: { tenantId, email: em, role: 'owner' },
+        update: nama ? { nama } : {},
+        create: { tenantId, email: em, role: 'owner', nama },
       })
       return NextResponse.json({ success: true, member: { email: em, tenantId } }, { status: 201 })
     }
 
-    // moveTenant / hapus user belum didukung di ZTransport (bisa lewat
-    // Settings > Kelola Anggota di app-nya). Tambahkan di sini bila perlu.
+    // Nonaktifkan user (hard-delete keanggotaan) — ZTransport tak punya flag
+    // active di TenantMember, jadi "nonaktif" = hapus keanggotaan email itu.
+    if (action === 'delete') {
+      const em = String(email || data?.email || '').trim().toLowerCase()
+      if (!em) return NextResponse.json({ error: 'email wajib' }, { status: 400 })
+      await prisma.tenantMember.deleteMany({ where: { email: em } })
+      return NextResponse.json({ success: true })
+    }
+
+    if (action === 'reactivate') {
+      // Tidak ada yang bisa diaktifkan ulang (keanggotaan sudah dihapus).
+      // Tambahkan lagi lewat "Tambah User". Balas sukses supaya UI ZOne mulus.
+      return NextResponse.json({ success: true, note: 'Keanggotaan ZTransport bersifat hapus permanen; tambah ulang via Tambah User.' })
+    }
+
+    // Pindah PO = KONSOLIDASI ke satu keanggotaan (hapus keanggotaan email di
+    // PO lain, buat satu di PO tujuan). Ini juga cara membersihkan email yang
+    // terlanjur jadi anggota beberapa PO.
+    if (action === 'moveTenant') {
+      const em = String(email || data?.email || '').trim().toLowerCase()
+      const tenantId = data?.tenantId ? String(data.tenantId) : null
+      if (!em || !tenantId) return NextResponse.json({ error: 'email & tenantId wajib' }, { status: 400 })
+      const t = await prisma.tenant.findUnique({ where: { id: tenantId } })
+      if (!t) return NextResponse.json({ error: 'Tenant tidak ditemukan' }, { status: 404 })
+      const existing = await prisma.tenantMember.findFirst({ where: { email: em } })
+      const nama = existing?.nama ?? null
+      const role = existing?.role ?? 'owner'
+      await prisma.tenantMember.deleteMany({ where: { email: em } })
+      await prisma.tenantMember.create({ data: { tenantId, email: em, role, nama } })
+      return NextResponse.json({ success: true })
+    }
+
+    if (action === 'updateRole') {
+      const em = String(email || data?.email || '').trim().toLowerCase()
+      const role = String(data?.role || '').trim()
+      if (!em || !role) return NextResponse.json({ error: 'email & role wajib' }, { status: 400 })
+      await prisma.tenantMember.updateMany({ where: { email: em }, data: { role } })
+      return NextResponse.json({ success: true })
+    }
+
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
   } catch (error) {
     console.error('Cross-app POST error:', error)

@@ -38,6 +38,7 @@ async function migrate() {
   await run(`CREATE TABLE IF NOT EXISTS "TenantMember" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),"tenantId" TEXT NOT NULL,email TEXT NOT NULL,role TEXT NOT NULL DEFAULT 'owner',"createdAt" TIMESTAMP NOT NULL DEFAULT now(),CONSTRAINT "TenantMember_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"(id) ON DELETE CASCADE)`)
   await run(`DO $x$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='TenantMember_tenantId_email_key') THEN ALTER TABLE "TenantMember" ADD CONSTRAINT "TenantMember_tenantId_email_key" UNIQUE ("tenantId", email); END IF; END $x$`)
   await run(`CREATE INDEX IF NOT EXISTS "TenantMember_email_idx" ON "TenantMember"(email)`)
+  await run(`DO $x$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='TenantMember' AND column_name='nama') THEN ALTER TABLE "TenantMember" ADD COLUMN nama TEXT; END IF; END $x$`)
 
   // Backfill: siapa pun yang sudah pernah pilih tenant (UserPref) otomatis
   // jadi owner member tenant itu — supaya user lama tidak kehilangan akses
@@ -57,7 +58,11 @@ async function migrate() {
   // lewat cron /api/demo/reset-daily, bukan di sini.
   const demoEmail = (process.env.DEMO_EMAIL || 'demo@zomet.my.id').replace(/'/g, "''")
   await run(`INSERT INTO "Tenant" (id, nama, slug, loket, telepon, plan, "planExpires", "isActive", "isDemo") VALUES (gen_random_uuid(), 'PO Demo Zomet', 'demo', 'Loket Demo', '0800-1234-5678', 'pro', '2099-12-31', true, true) ON CONFLICT (slug) DO UPDATE SET "isDemo"=true, plan='pro', "planExpires"='2099-12-31'`)
-  await run(`INSERT INTO "TenantMember" (id, "tenantId", email, role) SELECT gen_random_uuid(), id, '${demoEmail}', 'owner' FROM "Tenant" WHERE slug='demo' ON CONFLICT ("tenantId", email) DO NOTHING`)
+  await run(`INSERT INTO "TenantMember" (id, "tenantId", email, role, nama) SELECT gen_random_uuid(), id, '${demoEmail}', 'owner', 'Akun Demo' FROM "Tenant" WHERE slug='demo' ON CONFLICT ("tenantId", email) DO UPDATE SET nama='Akun Demo'`)
+  // Akun demo bersama HANYA boleh jadi anggota PO demo (slug 'demo'). Hapus
+  // keanggotaan demo@ di PO lain (mis. hasil test) supaya tidak tampil ganda
+  // di daftar user ZOne. Hanya menyentuh email demo — user lain tak terpengaruh.
+  await run(`DELETE FROM "TenantMember" WHERE email='${demoEmail}' AND "tenantId" NOT IN (SELECT id FROM "Tenant" WHERE slug='demo')`)
 
   await run(`CREATE TABLE IF NOT EXISTS "Bus" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),"tenantId" TEXT NOT NULL,nama TEXT NOT NULL,plat TEXT NOT NULL,kelas "KelasBus" NOT NULL DEFAULT 'EKONOMI',layout TEXT NOT NULL DEFAULT '2-2',"totalKursi" INT NOT NULL DEFAULT 32,aktif BOOLEAN NOT NULL DEFAULT true,"createdAt" TIMESTAMP NOT NULL DEFAULT now(),CONSTRAINT "Bus_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"(id) ON DELETE CASCADE)`)
   await run(`CREATE INDEX IF NOT EXISTS "Bus_tenantId_idx" ON "Bus"("tenantId")`)
