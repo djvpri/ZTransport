@@ -44,6 +44,8 @@ export async function POST(req: Request) {
         berat: b.berat ? Number(b.berat) : null,
         koli: Number(b.koli || 1),
         tarif: Number(b.tarif || 0),
+        statusBayar: b.statusBayar === 'BELUM' ? 'BELUM' : 'LUNAS',
+        metodeBayar: b.statusBayar === 'BELUM' ? null : (b.metodeBayar || 'TUNAI'),
         createdBy: session.email,
       },
     })
@@ -60,8 +62,8 @@ export async function POST(req: Request) {
 export async function PATCH(req: Request) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { resi, status } = await req.json()
-  if (!resi || !status) return NextResponse.json({ error: 'resi & status wajib' }, { status: 400 })
+  const { resi, status, statusBayar, metodeBayar } = await req.json()
+  if (!resi || (!status && !statusBayar)) return NextResponse.json({ error: 'resi & (status/statusBayar) wajib' }, { status: 400 })
 
   const paket = await prisma.paket.findUnique({ where: { resi } })
   if (!paket) return NextResponse.json({ error: 'Paket tidak ditemukan' }, { status: 404 })
@@ -69,6 +71,13 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'Tidak punya akses ke paket ini' }, { status: 403 })
   }
 
-  await prisma.paket.update({ where: { resi }, data: { status } })
+  const data: any = {}
+  if (status) data.status = status
+  if (statusBayar) {
+    data.statusBayar = statusBayar
+    if (statusBayar === 'LUNAS') data.metodeBayar = metodeBayar || 'TUNAI'
+    if (statusBayar === 'BELUM') data.metodeBayar = null
+  }
+  await prisma.paket.update({ where: { resi }, data })
   return NextResponse.json({ success: true })
 }

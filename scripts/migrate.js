@@ -94,6 +94,8 @@ async function migrate() {
   await run(`CREATE TABLE IF NOT EXISTS "Paket" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),"tenantId" TEXT NOT NULL,"tripId" TEXT,resi TEXT NOT NULL UNIQUE,pengirim TEXT NOT NULL,"hpPengirim" TEXT,penerima TEXT NOT NULL,"hpPenerima" TEXT,tujuan TEXT NOT NULL,isi TEXT,berat DECIMAL(8,2),koli INT NOT NULL DEFAULT 1,tarif DECIMAL(12,2) NOT NULL,status "StatusPaket" NOT NULL DEFAULT 'DITERIMA',"createdBy" TEXT,"createdAt" TIMESTAMP NOT NULL DEFAULT now(),CONSTRAINT "Paket_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"(id) ON DELETE CASCADE,CONSTRAINT "Paket_tripId_fkey" FOREIGN KEY ("tripId") REFERENCES "Trip"(id) ON DELETE SET NULL)`)
   await run(`CREATE INDEX IF NOT EXISTS "Paket_tenantId_idx" ON "Paket"("tenantId")`)
   await run(`CREATE INDEX IF NOT EXISTS "Paket_status_idx" ON "Paket"(status)`)
+  await run(`DO $x$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Paket' AND column_name='statusBayar') THEN ALTER TABLE "Paket" ADD COLUMN "statusBayar" "StatusBayar" NOT NULL DEFAULT 'LUNAS'; END IF; END $x$`)
+  await run(`DO $x$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Paket' AND column_name='metodeBayar') THEN ALTER TABLE "Paket" ADD COLUMN "metodeBayar" TEXT; END IF; END $x$`)
 
   console.log('Migrations done ✓')
 }

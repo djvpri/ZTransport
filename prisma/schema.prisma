@@ -271,6 +271,8 @@ model Paket {
   koli        Int         @default(1)
   tarif       Decimal     @db.Decimal(12, 2)
   status      StatusPaket @default(DITERIMA)
+  statusBayar StatusBayar @default(LUNAS)
+  metodeBayar String?     // TUNAI | TRANSFER | QRIS
   createdBy   String?
   createdAt   DateTime    @default(now())
 

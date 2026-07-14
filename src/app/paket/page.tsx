@@ -9,7 +9,9 @@ type Paket = {
   resi: string; pengirim: string; penerima: string; tujuan: string
   koli: number; tarif: number; status: string; createdAt: string
   isi?: string | null; berat?: number | null; hpPengirim?: string | null; hpPenerima?: string | null
+  tripId?: string | null; statusBayar?: string; metodeBayar?: string | null
 }
+type TripOpt = { id: string; jam: string; tanggal: string; rute: string; bus: string }
 
 const STATUS_LABEL: Record<string, { t: string; c: string }> = {
   DITERIMA: { t: 'Diterima', c: 'bg-slate-700 text-slate-300' },
@@ -23,12 +25,14 @@ export default function PaketPage() {
   const router = useRouter()
   const [list, setList] = useState<Paket[]>([])
   const [po, setPo] = useState('')
+  const [trips, setTrips] = useState<TripOpt[]>([])
   const [form, setForm] = useState(false)
-  const [f, setF] = useState({ pengirim: '', hpPengirim: '', penerima: '', hpPenerima: '', tujuan: '', isi: '', berat: '', koli: '1', tarif: '' })
+  const [f, setF] = useState({ pengirim: '', hpPengirim: '', penerima: '', hpPenerima: '', tujuan: '', isi: '', berat: '', koli: '1', tarif: '', tripId: '', statusBayar: 'LUNAS', metodeBayar: 'TUNAI' })
   const [error, setError] = useState('')
 
   function load() { fetch('/api/paket').then((r) => r.json()).then((d) => { setList(d.paket || []); if (d.po) setPo(d.po) }) }
   useEffect(load, [])
+  useEffect(() => { fetch('/api/trip').then((r) => r.json()).then((d) => setTrips(d.trips || [])) }, [])
 
   const estimasiTarif = hitungTarifKargo({ berat: f.berat, koli: f.koli })
   // Auto-isi tarif dari berat/koli selama field tarif masih kosong (belum di-override manual).
@@ -42,11 +46,16 @@ export default function PaketPage() {
     const res = await fetch('/api/paket', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(f) })
     const d = await res.json()
     if (!res.ok) return setError(d.error)
-    setForm(false); setF({ pengirim: '', hpPengirim: '', penerima: '', hpPenerima: '', tujuan: '', isi: '', berat: '', koli: '1', tarif: '' }); load()
+    setForm(false); setF({ pengirim: '', hpPengirim: '', penerima: '', hpPenerima: '', tujuan: '', isi: '', berat: '', koli: '1', tarif: '', tripId: '', statusBayar: 'LUNAS', metodeBayar: 'TUNAI' }); load()
   }
 
   async function ubahStatus(resi: string, status: string) {
     await fetch('/api/paket', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resi, status }) })
+    load()
+  }
+
+  async function lunasi(resi: string) {
+    await fetch('/api/paket', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resi, statusBayar: 'LUNAS', metodeBayar: 'TUNAI' }) })
     load()
   }
 
@@ -105,6 +114,32 @@ body{font-family:Arial,Helvetica,sans-serif;color:#000;margin:0;font-size:12px}
                 onChange={(e) => setF((s) => ({ ...s, [k]: e.target.value }))}
                 className="rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-amber-500" />
             ))}
+            <select value={f.tripId} onChange={(e) => setF((s) => ({ ...s, tripId: e.target.value }))}
+              className="sm:col-span-2 rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-amber-500 text-slate-300">
+              <option value="">Naik trip (opsional) — pilih keberangkatan…</option>
+              {trips.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} · {t.jam} · {t.rute} · {t.bus}
+                </option>
+              ))}
+            </select>
+            <div className="sm:col-span-2 flex flex-wrap items-center gap-2">
+              <span className="text-xs text-slate-500">Pembayaran:</span>
+              {(['LUNAS', 'BELUM'] as const).map((sb) => (
+                <button key={sb} type="button" onClick={() => setF((s) => ({ ...s, statusBayar: sb }))}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium ${f.statusBayar === sb ? (sb === 'LUNAS' ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40' : 'bg-amber-400/20 text-amber-300 border border-amber-500/40') : 'border border-slate-700 text-slate-400'}`}>
+                  {sb === 'LUNAS' ? 'Lunas' : 'Belum bayar'}
+                </button>
+              ))}
+              {f.statusBayar === 'LUNAS' && (
+                <select value={f.metodeBayar} onChange={(e) => setF((s) => ({ ...s, metodeBayar: e.target.value }))}
+                  className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-1.5 text-xs outline-none focus:border-amber-500">
+                  <option value="TUNAI">Tunai</option>
+                  <option value="TRANSFER">Transfer</option>
+                  <option value="QRIS">QRIS</option>
+                </select>
+              )}
+            </div>
             <div className="sm:col-span-2 flex flex-wrap items-center justify-between gap-2 text-xs">
               <span className="text-slate-500">Estimasi tarif: <span className="font-semibold text-amber-300">{formatRupiah(estimasiTarif)}</span>
                 <span className="text-slate-600"> (Rp{KARGO_TARIF.perKg.toLocaleString('id-ID')}/kg + Rp{KARGO_TARIF.perKoli.toLocaleString('id-ID')}/koli, min Rp{KARGO_TARIF.minimum.toLocaleString('id-ID')})</span>
@@ -126,11 +161,15 @@ body{font-family:Arial,Helvetica,sans-serif;color:#000;margin:0;font-size:12px}
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-amber-300 text-sm">{p.resi}</span>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full ${st.c}`}>{st.t}</span>
+                    {p.statusBayar === 'BELUM' && <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300">Belum bayar</span>}
                   </div>
                   <div className="text-sm mt-1 truncate">{p.pengirim} → {p.penerima}</div>
                   <div className="text-xs text-slate-500">{p.tujuan} · {p.koli} koli · {formatRupiah(p.tarif)}</div>
                 </div>
                 <div className="shrink-0 flex items-center gap-1.5">
+                  {p.statusBayar === 'BELUM' && (
+                    <button onClick={() => lunasi(p.resi)} className="rounded-lg border border-teal-500/40 text-teal-300 px-3 py-1.5 text-xs hover:bg-teal-500/10">Lunasi</button>
+                  )}
                   <button onClick={() => cetakLabel(p)} title="Cetak label"
                     className="grid h-8 w-8 place-items-center rounded-lg border border-slate-700 text-slate-400 hover:text-amber-300 hover:border-amber-500">
                     <Printer size={13} />

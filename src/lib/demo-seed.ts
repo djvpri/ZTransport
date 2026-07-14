@@ -85,6 +85,7 @@ export async function seedDataDemo(tenantId: string): Promise<void> {
 
   // Trip harian + booking + tiket (relatif ke now)
   const now = new Date()
+  const tripIds: string[] = []
   for (const off of DAY_OFFSETS) {
     const tanggal = new Date(now); tanggal.setDate(tanggal.getDate() + off); tanggal.setHours(0, 0, 0, 0)
     const isPast = off < 0, isToday = off === 0
@@ -96,6 +97,7 @@ export async function seedDataDemo(tenantId: string): Promise<void> {
       const trip = await prisma.trip.create({
         data: { tenantId, jadwalId: j.id, ruteId: rute.id, busId: bus.id, tanggal, jam: j.jam, status: status as never, sopir: j.sopir, kernet: j.kernet },
       })
+      tripIds.push(trip.id)
 
       // Persentase kursi terjual: masa lalu ramai, hari ini sedang, ke depan sepi
       const pct = isPast ? acak(55, 90) : isToday ? acak(35, 75) : acak(5, 35)
@@ -138,7 +140,8 @@ export async function seedDataDemo(tenantId: string): Promise<void> {
 
   // Paket (kargo) berbagai status
   const statusPaket = ['DITERIMA', 'DIKIRIM', 'SAMPAI', 'DIAMBIL']
-  for (let k = 0; k < 6; k++) {
+  for (let k = 0; k < 8; k++) {
+    const bayarPkt = Math.random() < 0.2 ? 'BELUM' : 'LUNAS'
     await prisma.paket.create({
       data: {
         tenantId, resi: uniq('P'), pengirim: pilih(NAMA), hpPengirim: hpAcak(),
@@ -146,6 +149,9 @@ export async function seedDataDemo(tenantId: string): Promise<void> {
         tujuan: pilih(['Pontianak', 'Sintang', 'Nanga Pinoh', 'Sanggau']),
         isi: pilih(ISI_PAKET), berat: acak(1, 20), koli: acak(1, 4), tarif: acak(2, 12) * 10000,
         status: pilih(statusPaket) as never, createdBy: 'demo@zomet.my.id',
+        statusBayar: bayarPkt as never,
+        metodeBayar: bayarPkt === 'LUNAS' ? pilih(['TUNAI', 'TRANSFER', 'QRIS']) : null,
+        tripId: tripIds.length && Math.random() < 0.7 ? pilih(tripIds) : null,
         createdAt: new Date(now.getTime() - acak(0, 96) * 3600000),
       },
     })

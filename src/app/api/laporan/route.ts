@@ -29,14 +29,14 @@ export async function GET(req: Request) {
   const bookings = await prisma.booking.findMany({
     where: { tenantId: tenant.id, createdAt: { gte: fromDate, lt: toExclusive } },
     select: {
-      totalHarga: true, channel: true, createdAt: true,
+      totalHarga: true, channel: true, metodeBayar: true, createdAt: true,
       _count: { select: { tiket: true } },
       trip: { select: { rute: { select: { nama: true } }, bus: { select: { nama: true } } } },
     },
   })
   const paket = await prisma.paket.findMany({
     where: { tenantId: tenant.id, createdAt: { gte: fromDate, lt: toExclusive } },
-    select: { tarif: true },
+    select: { tarif: true, statusBayar: true, metodeBayar: true },
   })
 
   let pendapatanTiket = 0, jumlahTiket = 0
@@ -44,6 +44,7 @@ export async function GET(req: Request) {
   const perRute: Record<string, { pendapatan: number; tiket: number }> = {}
   const perBus: Record<string, { pendapatan: number; tiket: number }> = {}
   const perChannel: Record<string, { pendapatan: number; booking: number }> = {}
+  const perMetode: Record<string, { pendapatan: number; jumlah: number }> = {}
 
   for (const b of bookings) {
     const harga = Number(b.totalHarga)
@@ -66,9 +67,21 @@ export async function GET(req: Request) {
     const ch = b.channel
     if (!perChannel[ch]) perChannel[ch] = { pendapatan: 0, booking: 0 }
     perChannel[ch].pendapatan += harga; perChannel[ch].booking += 1
+
+    if (b.metodeBayar) {
+      if (!perMetode[b.metodeBayar]) perMetode[b.metodeBayar] = { pendapatan: 0, jumlah: 0 }
+      perMetode[b.metodeBayar].pendapatan += harga; perMetode[b.metodeBayar].jumlah += 1
+    }
   }
 
   const pendapatanPaket = paket.reduce((s, p) => s + Number(p.tarif), 0)
+  // Rekonsiliasi metode bayar: gabung tiket + paket yang sudah LUNAS & bermetode.
+  for (const p of paket) {
+    if (p.statusBayar === 'LUNAS' && p.metodeBayar) {
+      if (!perMetode[p.metodeBayar]) perMetode[p.metodeBayar] = { pendapatan: 0, jumlah: 0 }
+      perMetode[p.metodeBayar].pendapatan += Number(p.tarif); perMetode[p.metodeBayar].jumlah += 1
+    }
+  }
   const limits = getPlanLimits(tenant.plan, tenant.planExpires)
 
   return NextResponse.json({
@@ -86,6 +99,7 @@ export async function GET(req: Request) {
     perRute: Object.entries(perRute).map(([nama, v]) => ({ nama, ...v })).sort((a, b) => b.pendapatan - a.pendapatan),
     perBus: Object.entries(perBus).map(([nama, v]) => ({ nama, ...v })).sort((a, b) => b.pendapatan - a.pendapatan),
     perChannel: Object.entries(perChannel).map(([channel, v]) => ({ channel, ...v })).sort((a, b) => b.pendapatan - a.pendapatan),
+    perMetode: Object.entries(perMetode).map(([metode, v]) => ({ metode, ...v })).sort((a, b) => b.pendapatan - a.pendapatan),
     eksporLaporan: limits.eksporLaporan,
   })
 }

@@ -12,11 +12,13 @@ type Laporan = {
   perRute: { nama: string; pendapatan: number; tiket: number }[]
   perBus: { nama: string; pendapatan: number; tiket: number }[]
   perChannel: { channel: string; pendapatan: number; booking: number }[]
+  perMetode: { metode: string; pendapatan: number; jumlah: number }[]
   eksporLaporan: boolean
 }
 
 type Preset = 'today' | '7days' | '30days' | 'custom'
 const CHANNEL_LABEL: Record<string, string> = { LOKET: 'Loket', WA: 'WhatsApp', ONLINE: 'Online', AGEN: 'Agen' }
+const METODE_LABEL: Record<string, string> = { TUNAI: 'Tunai', TRANSFER: 'Transfer', QRIS: 'QRIS' }
 const ymd = (d: Date) => d.toLocaleDateString('en-CA')
 const tglIndo = (s: string) => new Date(s + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
 
@@ -103,6 +105,10 @@ ${rows(data.perBus, (b) => `<tr><td>${esc(b.nama)}</td><td class="num">${b.tiket
 <h2>Per Channel</h2>
 <table><thead><tr><th>Channel</th><th class="num">Booking</th><th class="num">Pendapatan</th></tr></thead><tbody>
 ${rows(data.perChannel, (c) => `<tr><td>${esc(CHANNEL_LABEL[c.channel] || c.channel)}</td><td class="num">${c.booking}</td><td class="num">${rp(c.pendapatan)}</td></tr>`) || '<tr><td colspan="3">—</td></tr>'}
+</tbody></table>
+<h2>Per Metode Bayar</h2>
+<table><thead><tr><th>Metode</th><th class="num">Transaksi</th><th class="num">Pendapatan</th></tr></thead><tbody>
+${rows(data.perMetode, (m) => `<tr><td>${esc(METODE_LABEL[m.metode] || m.metode)}</td><td class="num">${m.jumlah}</td><td class="num">${rp(m.pendapatan)}</td></tr>`) || '<tr><td colspan="3">—</td></tr>'}
 </tbody></table>
 <h2>Per Hari</h2>
 <table><thead><tr><th>Tanggal</th><th class="num">Pendapatan</th><th class="num">Tiket</th><th class="num">Booking</th></tr></thead><tbody>
@@ -193,12 +199,19 @@ ${rows(data.perHari, (h) => `<tr><td>${tglIndo(h.tanggal)}</td><td class="num">$
               </Panel>
             </div>
 
-            {/* Per bus */}
-            <Panel title="Per Bus">
-              {data.perBus.length === 0 ? <Empty /> : data.perBus.map((b) => (
-                <Row key={b.nama} kiri={b.nama} sub={`${b.tiket} tiket`} kanan={formatRupiah(b.pendapatan)} />
-              ))}
-            </Panel>
+            {/* Per bus & per metode bayar */}
+            <div className="grid gap-4 lg:grid-cols-2">
+              <Panel title="Per Bus">
+                {data.perBus.length === 0 ? <Empty /> : data.perBus.map((b) => (
+                  <Row key={b.nama} kiri={b.nama} sub={`${b.tiket} tiket`} kanan={formatRupiah(b.pendapatan)} />
+                ))}
+              </Panel>
+              <Panel title="Per Metode Bayar">
+                {data.perMetode.length === 0 ? <Empty /> : data.perMetode.map((m) => (
+                  <Row key={m.metode} kiri={METODE_LABEL[m.metode] || m.metode} sub={`${m.jumlah} transaksi`} kanan={formatRupiah(m.pendapatan)} />
+                ))}
+              </Panel>
+            </div>
 
             {/* Per hari */}
             <Panel title="Per Hari">
