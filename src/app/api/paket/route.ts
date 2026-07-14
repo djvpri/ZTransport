@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     orderBy: { createdAt: 'desc' },
     take: 50,
   })
-  return NextResponse.json({ paket: paket.map((p: any) => ({ ...p, tarif: Number(p.tarif), berat: p.berat ? Number(p.berat) : null })) })
+  return NextResponse.json({ po: tenant.nama, paket: paket.map((p: any) => ({ ...p, tarif: Number(p.tarif), berat: p.berat ? Number(p.berat) : null })) })
 }
 
 // POST /api/paket — terima kargo baru, hasilkan resi
