@@ -2,9 +2,10 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatRupiah } from '@/lib/seat'
-import { GraphUp, Download, LockFill } from 'react-bootstrap-icons'
+import { GraphUp, Download, LockFill, FileEarmarkPdf } from 'react-bootstrap-icons'
 
 type Laporan = {
+  po: string
   range: { from: string; to: string }
   summary: { pendapatanTiket: number; pendapatanPaket: number; total: number; jumlahBooking: number; jumlahTiket: number; jumlahPaket: number }
   perHari: { tanggal: string; pendapatan: number; tiket: number; booking: number }[]
@@ -61,6 +62,57 @@ export default function LaporanPage() {
     URL.revokeObjectURL(url)
   }
 
+  function cetakPDF() {
+    if (!data) return
+    const esc = (s: unknown) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const rp = (n: number) => 'Rp ' + Math.round(Number(n)).toLocaleString('id-ID')
+    const rows = <T,>(arr: T[], fn: (x: T) => string) => arr.map(fn).join('')
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Laporan ${esc(data.po)}</title><style>
+@page{size:A4 portrait;margin:14mm}
+*{box-sizing:border-box}
+body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:12px;margin:0}
+h1{font-size:18px;margin:0 0 2px}
+.sub{color:#555;font-size:11px;margin-bottom:14px}
+.sum{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.sum>div{flex:1;min-width:110px;border:1px solid #ddd;border-radius:6px;padding:8px 10px}
+.sum .l{font-size:10px;color:#666}
+.sum .v{font-size:14px;font-weight:bold}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#444;border-bottom:2px solid #333;padding-bottom:3px;margin:16px 0 6px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:5px 6px;border-bottom:1px solid #eee}
+th{font-size:10px;text-transform:uppercase;color:#666}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.foot{margin-top:18px;font-size:10px;color:#888}
+</style></head><body>
+<h1>${esc(data.po)}</h1>
+<div class="sub">Laporan Pendapatan &middot; ${tglIndo(data.range.from)} &ndash; ${tglIndo(data.range.to)}</div>
+<div class="sum">
+<div><div class="l">Total Pendapatan</div><div class="v">${rp(data.summary.total)}</div></div>
+<div><div class="l">Pendapatan Tiket</div><div class="v">${rp(data.summary.pendapatanTiket)}</div></div>
+<div><div class="l">Pendapatan Paket</div><div class="v">${rp(data.summary.pendapatanPaket)}</div></div>
+<div><div class="l">Tiket / Booking</div><div class="v">${data.summary.jumlahTiket} / ${data.summary.jumlahBooking}</div></div>
+</div>
+<h2>Per Rute</h2>
+<table><thead><tr><th>Rute</th><th class="num">Tiket</th><th class="num">Pendapatan</th></tr></thead><tbody>
+${rows(data.perRute, (r) => `<tr><td>${esc(r.nama)}</td><td class="num">${r.tiket}</td><td class="num">${rp(r.pendapatan)}</td></tr>`) || '<tr><td colspan="3">—</td></tr>'}
+</tbody></table>
+<h2>Per Bus</h2>
+<table><thead><tr><th>Bus</th><th class="num">Tiket</th><th class="num">Pendapatan</th></tr></thead><tbody>
+${rows(data.perBus, (b) => `<tr><td>${esc(b.nama)}</td><td class="num">${b.tiket}</td><td class="num">${rp(b.pendapatan)}</td></tr>`) || '<tr><td colspan="3">—</td></tr>'}
+</tbody></table>
+<h2>Per Channel</h2>
+<table><thead><tr><th>Channel</th><th class="num">Booking</th><th class="num">Pendapatan</th></tr></thead><tbody>
+${rows(data.perChannel, (c) => `<tr><td>${esc(CHANNEL_LABEL[c.channel] || c.channel)}</td><td class="num">${c.booking}</td><td class="num">${rp(c.pendapatan)}</td></tr>`) || '<tr><td colspan="3">—</td></tr>'}
+</tbody></table>
+<h2>Per Hari</h2>
+<table><thead><tr><th>Tanggal</th><th class="num">Pendapatan</th><th class="num">Tiket</th><th class="num">Booking</th></tr></thead><tbody>
+${rows(data.perHari, (h) => `<tr><td>${tglIndo(h.tanggal)}</td><td class="num">${rp(h.pendapatan)}</td><td class="num">${h.tiket}</td><td class="num">${h.booking}</td></tr>`) || '<tr><td colspan="4">—</td></tr>'}
+</tbody></table>
+<div class="foot">Dicetak ${new Date().toLocaleString('id-ID')} &middot; Z-Trans</div>
+</body></html>`
+    printReport(html)
+  }
+
   const CARDS = data ? [
     { label: 'Total Pendapatan', value: formatRupiah(data.summary.total), tone: 'text-amber-300 bg-amber-400/10' },
     { label: 'Pendapatan Tiket', value: formatRupiah(data.summary.pendapatanTiket), tone: 'text-teal-300 bg-teal-400/10' },
@@ -77,9 +129,14 @@ export default function LaporanPage() {
             <h1 className="font-display text-lg tracking-wide flex items-center gap-2"><GraphUp size={18} className="text-amber-400" /> Laporan</h1>
           </div>
           {data?.eksporLaporan ? (
-            <button onClick={exportCSV} className="flex items-center gap-1.5 rounded-lg bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-amber-300">
-              <Download size={14} /> CSV
-            </button>
+            <div className="flex items-center gap-2">
+              <button onClick={cetakPDF} className="flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-2 text-sm font-semibold text-slate-300 hover:text-amber-300 hover:border-slate-600">
+                <FileEarmarkPdf size={14} /> PDF
+              </button>
+              <button onClick={exportCSV} className="flex items-center gap-1.5 rounded-lg bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-amber-300">
+                <Download size={14} /> CSV
+              </button>
+            </div>
           ) : (
             <span className="flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-500" title="Tersedia di paket Basic ke atas">
               <LockFill size={12} /> Ekspor (Pro)
@@ -197,3 +254,23 @@ function Row({ kiri, sub, kanan }: { kiri: string; sub: string; kanan: string })
   )
 }
 function Empty() { return <p className="text-sm text-slate-600 py-2">Belum ada data di periode ini.</p> }
+
+// Cetak laporan lewat iframe tersembunyi (dokumen A4 terisolasi). User pilih
+// "Simpan sebagai PDF" di dialog print → tanpa dependensi jsPDF.
+function printReport(html: string) {
+  const iframe = document.createElement('iframe')
+  iframe.setAttribute('aria-hidden', 'true')
+  iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;'
+  document.body.appendChild(iframe)
+  const win = iframe.contentWindow
+  const doc = win?.document
+  if (!win || !doc) { document.body.removeChild(iframe); window.print(); return }
+  let done = false
+  const finish = () => { if (done) return; done = true; setTimeout(() => { try { document.body.removeChild(iframe) } catch {} }, 300) }
+  doc.open(); doc.write(html); doc.close()
+  win.onafterprint = finish
+  setTimeout(() => {
+    try { win.focus(); win.print() } catch { window.print() }
+    setTimeout(finish, 2000)
+  }, 250)
+}

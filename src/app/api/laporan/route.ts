@@ -72,6 +72,7 @@ export async function GET(req: Request) {
   const limits = getPlanLimits(tenant.plan, tenant.planExpires)
 
   return NextResponse.json({
+    po: tenant.nama,
     range: { from: fromStr, to: toStr },
     summary: {
       pendapatanTiket,
