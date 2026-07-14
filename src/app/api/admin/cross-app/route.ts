@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
     })
 
+    const members = await prisma.tenantMember.findMany({ orderBy: { createdAt: 'desc' } })
     return NextResponse.json({
       tenants: tenants.map(t => ({
         id: t.id,
@@ -25,7 +26,9 @@ export async function GET(req: NextRequest) {
         active: t.isActive,
         expires_at: t.planExpires,
       })),
-      users: [], // ZTransport tidak punya User model — SSO via ZOne
+      // ZTransport SSO-only: "user" = anggota tenant (TenantMember). Password
+      // tidak disimpan di sini (login lewat SSO ZOne).
+      users: members.map(m => ({ id: m.id, email: m.email, tenantId: m.tenantId, role: m.role, active: true })),
     })
   } catch (error) {
     console.error('Cross-app GET error:', error)
@@ -103,6 +106,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true })
     }
 
+    // --- User (anggota tenant) actions ---
+    // ZTransport SSO-only (tak ada User/password lokal). "Tambah user" dari ZOne
+    // = jadikan email itu anggota (TenantMember) sebuah PO. Password diabaikan.
+    if (action === 'create') {
+      const em = String(email || data?.email || '').trim().toLowerCase()
+      if (!em) return NextResponse.json({ error: 'email wajib' }, { status: 400 })
+      const tenantId = data?.tenantId ? String(data.tenantId) : null
+      if (!tenantId) {
+        // Tanpa PO tak ada keanggotaan yang bisa dibuat (akses login diatur di
+        // ZOne). Bukan error — supaya toggle akses di ZOne tidak gagal.
+        return NextResponse.json({ success: true, note: 'Akses SSO diatur di ZOne; pilih PO untuk memberi keanggotaan.' })
+      }
+      const t = await prisma.tenant.findUnique({ where: { id: tenantId } })
+      if (!t) return NextResponse.json({ error: 'Tenant tidak ditemukan' }, { status: 404 })
+      await prisma.tenantMember.upsert({
+        where: { tenantId_email: { tenantId, email: em } },
+        update: {},
+        create: { tenantId, email: em, role: 'owner' },
+      })
+      return NextResponse.json({ success: true, member: { email: em, tenantId } }, { status: 201 })
+    }
+
+    // moveTenant / hapus user belum didukung di ZTransport (bisa lewat
+    // Settings > Kelola Anggota di app-nya). Tambahkan di sini bila perlu.
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
   } catch (error) {
     console.error('Cross-app POST error:', error)
