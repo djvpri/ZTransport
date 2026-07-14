@@ -30,6 +30,7 @@ async function migrate() {
   await run(`DO $x$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Tenant' AND column_name='plan') THEN ALTER TABLE "Tenant" ADD COLUMN plan TEXT NOT NULL DEFAULT 'free'; END IF; END $x$`)
   await run(`DO $x$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Tenant' AND column_name='planExpires') THEN ALTER TABLE "Tenant" ADD COLUMN "planExpires" TIMESTAMP; END IF; END $x$`)
   await run(`DO $x$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Tenant' AND column_name='isActive') THEN ALTER TABLE "Tenant" ADD COLUMN "isActive" BOOLEAN NOT NULL DEFAULT true; END IF; END $x$`)
+  await run(`DO $x$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Tenant' AND column_name='isDemo') THEN ALTER TABLE "Tenant" ADD COLUMN "isDemo" BOOLEAN NOT NULL DEFAULT false; END IF; END $x$`)
 
   await run(`CREATE TABLE IF NOT EXISTS "UserPref" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),email TEXT NOT NULL UNIQUE,"tenantId" TEXT NOT NULL,"createdAt" TIMESTAMP NOT NULL DEFAULT now(),CONSTRAINT "UserPref_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"(id) ON DELETE CASCADE)`)
 
@@ -48,6 +49,15 @@ async function migrate() {
   // belum pernah pilih tenant lewat /pilih-tenant sama sekali).
   const bootstrapEmail = (process.env.SEED_OWNER_EMAIL || 'sentarummedia@gmail.com').replace(/'/g, "''")
   await run(`INSERT INTO "TenantMember" (id, "tenantId", email, role) SELECT gen_random_uuid(), id, '${bootstrapEmail}', 'owner' FROM "Tenant" WHERE slug='kapuas-raya' ON CONFLICT ("tenantId", email) DO NOTHING`)
+
+  // Tenant DEMO bersama: satu PO demo (slug 'demo') yang direset harian oleh
+  // cron. Ditandai isDemo=true (dicari lewat flag ini, bukan hardcode email),
+  // plan 'pro' + expiry jauh supaya semua fitur terbuka saat dieksplor.
+  // Datanya (bus/rute/trip/booking/tiket/paket) diisi oleh lib/demo-seed.ts
+  // lewat cron /api/demo/reset-daily, bukan di sini.
+  const demoEmail = (process.env.DEMO_EMAIL || 'demo@zomet.my.id').replace(/'/g, "''")
+  await run(`INSERT INTO "Tenant" (id, nama, slug, loket, telepon, plan, "planExpires", "isActive", "isDemo") VALUES (gen_random_uuid(), 'PO Demo Zomet', 'demo', 'Loket Demo', '0800-1234-5678', 'pro', '2099-12-31', true, true) ON CONFLICT (slug) DO UPDATE SET "isDemo"=true, plan='pro', "planExpires"='2099-12-31'`)
+  await run(`INSERT INTO "TenantMember" (id, "tenantId", email, role) SELECT gen_random_uuid(), id, '${demoEmail}', 'owner' FROM "Tenant" WHERE slug='demo' ON CONFLICT ("tenantId", email) DO NOTHING`)
 
   await run(`CREATE TABLE IF NOT EXISTS "Bus" (id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),"tenantId" TEXT NOT NULL,nama TEXT NOT NULL,plat TEXT NOT NULL,kelas "KelasBus" NOT NULL DEFAULT 'EKONOMI',layout TEXT NOT NULL DEFAULT '2-2',"totalKursi" INT NOT NULL DEFAULT 32,aktif BOOLEAN NOT NULL DEFAULT true,"createdAt" TIMESTAMP NOT NULL DEFAULT now(),CONSTRAINT "Bus_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"(id) ON DELETE CASCADE)`)
   await run(`CREATE INDEX IF NOT EXISTS "Bus_tenantId_idx" ON "Bus"("tenantId")`)

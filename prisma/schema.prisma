@@ -19,6 +19,7 @@ model Tenant {
   plan       String    @default("free") // free|basic|pro|enterprise
   planExpires DateTime?
   isActive   Boolean   @default(true)
+  isDemo     Boolean   @default(false) // tenant demo bersama, direset harian oleh cron
   createdAt  DateTime  @default(now())
 
   member  TenantMember[]
