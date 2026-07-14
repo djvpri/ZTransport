@@ -1,7 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { formatRupiah } from '@/lib/seat'
-import { BusFrontFill, GearFill, PersonCircle, HouseDoorFill, TicketFill, BoxSeam, CameraFill } from 'react-bootstrap-icons'
+import { BusFrontFill, GearFill, PersonCircle, HouseDoorFill, TicketFill, BoxSeam, CameraFill, GraphUp } from 'react-bootstrap-icons'
 
 type Trip = {
   id: string; jam: string; dari: string; ke: string; via: string
@@ -63,6 +63,10 @@ export default function Dashboard({ po, loket, kasir, stat, trips }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button onClick={() => router.push('/laporan')} title="Laporan"
+              className="grid h-9 w-9 place-items-center rounded-lg border border-slate-700 text-slate-400 hover:text-amber-300 hover:border-slate-600">
+              <GraphUp size={16} />
+            </button>
             <button onClick={() => router.push('/master')} title="Data Master"
               className="grid h-9 w-9 place-items-center rounded-lg border border-slate-700 text-slate-400 hover:text-amber-300 hover:border-slate-600">
               <GearFill size={16} />
@@ -143,12 +147,13 @@ export default function Dashboard({ po, loket, kasir, stat, trips }: Props) {
       </main>
 
       <nav className="fixed bottom-0 inset-x-0 z-20 border-t border-slate-800 bg-[#0B1120]/95 backdrop-blur sm:hidden">
-        <div className="grid grid-cols-4">
+        <div className="grid grid-cols-5">
           {[
             { label: 'Beranda', Icon: HouseDoorFill, href: '/' },
             { label: 'Jual', Icon: TicketFill, href: '/jual' },
             { label: 'Paket', Icon: BoxSeam, href: '/paket' },
             { label: 'Boarding', Icon: CameraFill, href: '/boarding' },
+            { label: 'Laporan', Icon: GraphUp, href: '/laporan' },
           ].map((n) => (
             <button key={n.href} onClick={() => router.push(n.href)}
               className="flex flex-col items-center gap-1 py-2.5 text-slate-400 active:text-amber-400">
