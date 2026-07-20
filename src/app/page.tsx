@@ -4,13 +4,14 @@ import { prisma } from '@/lib/prisma'
 import { getPlanLimits, getTenantPlanInfo } from '@/lib/pricing'
 import { isTenantMember } from '@/lib/tenant'
 import Dashboard from './Dashboard'
+import LandingPage from '@/components/LandingPage'
 import { BusFrontFill, SlashCircleFill, Award, GearFill, XLg, TicketFill, ReceiptCutoff, BoxSeam } from 'react-bootstrap-icons'
 
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
   const session = await getSession()
-  if (!session) redirect('/login')
+  if (!session) return <LandingPage />
 
   const pref = await prisma.userPref.findUnique({ where: { email: session.email } })
   if (!pref) redirect('/pilih-tenant')
