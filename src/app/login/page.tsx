@@ -1,4 +1,4 @@
-import { BusFrontFill } from 'react-bootstrap-icons'
+import { CompassFill } from 'react-bootstrap-icons'
 
 const ZONE_URL = process.env.NEXT_PUBLIC_ZONE_URL || 'https://zone.zomet.my.id'
 
@@ -6,9 +6,10 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen grid place-items-center px-4">
       <div className="w-full max-w-sm text-center">
-        <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-2xl bg-amber-400 text-slate-900"><BusFrontFill size={26} /></div>
+        <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-2xl bg-amber-400 text-slate-900"><CompassFill size={26} /></div>
         <h1 className="font-display text-2xl tracking-wide">Z-TRANS</h1>
-        <p className="mt-1 text-sm text-slate-400">Tiket &amp; manajemen bus</p>
+        <p className="mt-1 text-sm text-slate-400">Tiket &amp; manajemen angkutan darat &amp; laut</p>
+        <p className="mt-2 text-xs text-slate-500">Bus · Travel · Kapal · angkutan penumpang &amp; kargo lainnya</p>
         <a
           href={`${ZONE_URL}/api/sso/ztrans`}
           className="mt-8 flex items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 py-3 font-semibold text-slate-900 hover:bg-amber-300 transition"
