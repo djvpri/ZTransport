@@ -11,7 +11,7 @@ const features = [
     icon: 'bi-map-fill',
     iconColor: '#A78BFA', bg: 'rgba(139,92,246,0.1)',
     title: 'Manajemen Trip',
-    desc: 'Atur jadwal, rute, dan armada bus dengan mudah. Dashboard harian dengan status trip real-time.',
+    desc: 'Atur jadwal, rute, dan armada (bus, travel, kapal) dengan mudah. Dashboard harian dengan status trip real-time.',
   },
   {
     icon: 'bi-qr-code-scan',
@@ -46,7 +46,7 @@ const plans = [
     price: 0,
     highlight: false,
     features: [
-      '2 bus, 2 rute',
+      '2 armada, 2 rute',
       '4 trip/hari',
       '20 tiket/hari',
       '10 paket/hari',
@@ -60,7 +60,7 @@ const plans = [
     price: 99000,
     highlight: false,
     features: [
-      '5 bus, 5 rute',
+      '5 armada, 5 rute',
       '10 trip/hari',
       '50 tiket/hari',
       '25 paket/hari',
@@ -76,7 +76,7 @@ const plans = [
     price: 299000,
     highlight: true,
     features: [
-      '15 bus, 20 rute',
+      '15 armada, 20 rute',
       '40 trip/hari',
       '200 tiket/hari',
       '100 paket/hari',
@@ -94,7 +94,7 @@ const plans = [
     price: 999000,
     highlight: false,
     features: [
-      'Bus & rute tak terbatas',
+      'Armada & rute tak terbatas',
       'Trip & tiket tak terbatas',
       'Cetak tiket',
       'Boarding QR',
@@ -130,7 +130,7 @@ export default function LandingPage() {
               background: 'linear-gradient(135deg, #0EA5E9, #0284C7)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <i className="bi bi-bus-front-fill" style={{ color: '#fff', fontSize: 18 }} />
+              <i className="bi bi-compass-fill" style={{ color: '#fff', fontSize: 18 }} />
             </div>
             <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.3px' }}>Z-Trans</span>
           </div>
@@ -172,7 +172,7 @@ export default function LandingPage() {
             marginBottom: 28,
           }}>
             <i className="bi bi-stars" />
-            Platform Digital PO Bus &amp; Travel
+            Platform Digital Angkutan Darat &amp; Laut
           </div>
 
           <h1 style={{
@@ -181,13 +181,16 @@ export default function LandingPage() {
             letterSpacing: '-1.5px', marginBottom: 24,
             color: '#F8FAFC',
           }}>
-            Kelola Armada Bus Anda<br />
+            Kelola Armada Darat &amp; Laut Anda<br />
             <span style={{ color: '#0EA5E9' }}>Dalam Satu Platform</span>
           </h1>
 
-          <p style={{ fontSize: 18, color: '#94A3B8', lineHeight: 1.7, marginBottom: 40, maxWidth: 560, margin: '0 auto 40px' }}>
+          <p style={{ fontSize: 18, color: '#94A3B8', lineHeight: 1.7, marginBottom: 16, maxWidth: 560, margin: '0 auto 16px' }}>
             Penjualan tiket, jadwal trip, manifest penumpang, kargo, dan laporan pendapatan —
             semua digital, semua terhubung.
+          </p>
+          <p style={{ fontSize: 14, color: '#64748B', marginBottom: 40, maxWidth: 560, margin: '0 auto 40px' }}>
+            Bus &middot; Travel &middot; Kapal / Feri &middot; angkutan penumpang &amp; kargo lainnya
           </p>
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -224,7 +227,7 @@ export default function LandingPage() {
           }}>
             {[
               { icon: 'bi-ticket-perforated', label: 'Tiket Terjual', val: '142', color: '#0EA5E9' },
-              { icon: 'bi-bus-front', label: 'Trip Hari Ini', val: '8', color: '#A78BFA' },
+              { icon: 'bi-compass', label: 'Trip Hari Ini', val: '8', color: '#A78BFA' },
               { icon: 'bi-cash-coin', label: 'Pendapatan', val: 'Rp 6,8 jt', color: '#34D399' },
               { icon: 'bi-box-seam', label: 'Paket Masuk', val: '23', color: '#FBBF24' },
             ].map(s => (
@@ -268,7 +271,7 @@ export default function LandingPage() {
           <div style={{ textAlign: 'center', marginBottom: 64 }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: '#0EA5E9', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Fitur Lengkap</p>
             <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 16 }}>
-              Semua yang Dibutuhkan PO Bus
+              Semua yang Dibutuhkan Operator Angkutan
             </h2>
             <p style={{ fontSize: 16, color: '#94A3B8', maxWidth: 520, margin: '0 auto' }}>
               Dari penjualan tiket hingga laporan keuangan — satu platform untuk seluruh operasional Anda.
@@ -397,8 +400,8 @@ export default function LandingPage() {
               textDecoration: 'none',
               boxShadow: '0 0 40px rgba(14,165,233,0.35)',
             }}>
-              <i className="bi bi-bus-front-fill" />
-              Daftarkan PO Anda Sekarang
+              <i className="bi bi-compass-fill" />
+              Daftarkan Armada Anda Sekarang
               <i className="bi bi-arrow-right" />
             </Link>
           </div>
@@ -413,7 +416,7 @@ export default function LandingPage() {
             background: 'linear-gradient(135deg, #0EA5E9, #0284C7)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <i className="bi bi-bus-front-fill" style={{ color: '#fff', fontSize: 14 }} />
+            <i className="bi bi-compass-fill" style={{ color: '#fff', fontSize: 14 }} />
           </div>
           <span style={{ fontWeight: 700, color: '#94A3B8' }}>Z-Trans</span>
         </div>
