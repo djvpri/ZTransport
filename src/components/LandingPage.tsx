@@ -1,4 +1,18 @@
+'use client'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+
+const KOTA = ['Pontianak', 'Sintang', 'Badau', 'Sanggau', 'Putussibau', 'Nanga Pinoh', 'Sekadau', 'Ketapang', 'Singkawang', 'Mempawah', 'Sambas', 'Kapuas Hulu']
+
+// Ekosistem Zomet — social proof ASLI (platform yang sudah dipakai lintas bisnis).
+const EKOSISTEM = [
+  { nama: 'ZPos', icon: 'bi-shop' },
+  { nama: 'ZGold', icon: 'bi-gem' },
+  { nama: 'ZWisata', icon: 'bi-ticket-detailed' },
+  { nama: 'ZBilliar', icon: 'bi-collection' },
+  { nama: 'ZLaundry', icon: 'bi-basket' },
+  { nama: 'ZGym', icon: 'bi-heart-pulse' },
+]
 
 const features = [
   {
@@ -113,6 +127,25 @@ function formatRp(n: number) {
 }
 
 export default function LandingPage() {
+  // Angka pada mock dashboard "bergerak" pelan → kesan produk hidup. Ini
+  // CONTOH tampilan (dilabeli jelas), bukan klaim transaksi nyata.
+  const [live, setLive] = useState({ tiket: 142, trip: 8, pendapatan: 6.8, paket: 23 })
+  useEffect(() => {
+    const id = setInterval(() => {
+      setLive((v) => {
+        const addTiket = Math.random() < 0.7 ? (Math.random() < 0.5 ? 1 : 2) : 0
+        const addPaket = Math.random() < 0.18 ? 1 : 0
+        return {
+          tiket: v.tiket + addTiket,
+          trip: v.trip,
+          pendapatan: +(v.pendapatan + addTiket * 0.05).toFixed(2),
+          paket: v.paket + addPaket,
+        }
+      })
+    }, 2600)
+    return () => clearInterval(id)
+  }, [])
+
   return (
     <div className="min-h-screen" style={{ background: '#0F172A', color: '#F1F5F9', fontFamily: 'Inter, system-ui, sans-serif' }}>
 
@@ -165,14 +198,14 @@ export default function LandingPage() {
         <div style={{ position: 'relative', maxWidth: 800, margin: '0 auto' }}>
           {/* Badge */}
           <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.25)',
-            borderRadius: 999, padding: '6px 16px',
-            fontSize: 13, fontWeight: 600, color: '#38BDF8',
+            display: 'inline-flex', alignItems: 'center', gap: 9,
+            background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.35)',
+            borderRadius: 999, padding: '7px 18px',
+            fontSize: 13, fontWeight: 700, color: '#FCD34D',
             marginBottom: 28,
           }}>
-            <i className="bi bi-stars" />
-            Platform Digital Angkutan Darat &amp; Laut
+            <span className="live-dot" />
+            Promo Peluncuran · Gratis 6 bulan untuk 20 pendaftar pertama
           </div>
 
           <h1 style={{
@@ -205,15 +238,15 @@ export default function LandingPage() {
               <i className="bi bi-lightning-charge-fill" />
               Mulai Gratis Sekarang
             </Link>
-            <a href="#fitur" style={{
+            <a href="/api/demo/login" style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)',
               color: '#CBD5E1', fontWeight: 600, fontSize: 15,
               padding: '14px 28px', borderRadius: 12,
               textDecoration: 'none',
             }}>
-              Lihat Fitur
-              <i className="bi bi-arrow-down" />
+              <i className="bi bi-play-circle-fill" />
+              Coba Demo (tanpa daftar)
             </a>
           </div>
 
@@ -221,24 +254,29 @@ export default function LandingPage() {
           <div style={{
             marginTop: 64,
             background: '#1E293B', border: '1px solid #334155',
-            borderRadius: 16, padding: '20px 24px',
-            display: 'flex', gap: 16, flexWrap: 'wrap',
+            borderRadius: 16, padding: '16px 24px 20px',
             maxWidth: 700, margin: '64px auto 0',
           }}>
-            {[
-              { icon: 'bi-ticket-perforated', label: 'Tiket Terjual', val: '142', color: '#0EA5E9' },
-              { icon: 'bi-compass', label: 'Trip Hari Ini', val: '8', color: '#A78BFA' },
-              { icon: 'bi-cash-coin', label: 'Pendapatan', val: 'Rp 6,8 jt', color: '#34D399' },
-              { icon: 'bi-box-seam', label: 'Paket Masuk', val: '23', color: '#FBBF24' },
-            ].map(s => (
-              <div key={s.label} style={{ flex: '1 1 120px', textAlign: 'left' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <i className={`bi ${s.icon}`} style={{ color: s.color, fontSize: 16 }} />
-                  <span style={{ fontSize: 12, color: '#64748B' }}>{s.label}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, paddingBottom: 12, borderBottom: '1px solid #334155' }}>
+              <span className="live-dot" />
+              <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600 }}>Contoh dashboard — tampilan langsung</span>
+            </div>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+              {[
+                { icon: 'bi-ticket-perforated', label: 'Tiket Terjual', val: String(live.tiket), color: '#0EA5E9' },
+                { icon: 'bi-compass', label: 'Trip Hari Ini', val: String(live.trip), color: '#A78BFA' },
+                { icon: 'bi-cash-coin', label: 'Pendapatan', val: `Rp ${live.pendapatan.toLocaleString('id-ID')} jt`, color: '#34D399' },
+                { icon: 'bi-box-seam', label: 'Paket Masuk', val: String(live.paket), color: '#FBBF24' },
+              ].map(s => (
+                <div key={s.label} style={{ flex: '1 1 120px', textAlign: 'left' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                    <i className={`bi ${s.icon}`} style={{ color: s.color, fontSize: 16 }} />
+                    <span style={{ fontSize: 12, color: '#64748B' }}>{s.label}</span>
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: '#F1F5F9', fontVariantNumeric: 'tabular-nums' }}>{s.val}</div>
                 </div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: '#F1F5F9', fontVariantNumeric: 'tabular-nums' }}>{s.val}</div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -262,6 +300,20 @@ export default function LandingPage() {
               <div style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>{s.label}</div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── Marquee kota ── */}
+      <section style={{ padding: '22px 0', borderBottom: '1px solid #1E293B', overflow: 'hidden' }}>
+        <p style={{ textAlign: 'center', fontSize: 12, color: '#64748B', marginBottom: 14, letterSpacing: 0.8, textTransform: 'uppercase' }}>Siap untuk rute antar-kota &amp; antar-pulau</p>
+        <div className="marquee-wrap">
+          <div className="marquee-track">
+            {[...KOTA, ...KOTA].map((k, i) => (
+              <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, margin: '0 22px', color: '#94A3B8', fontSize: 15, fontWeight: 600 }}>
+                <i className="bi bi-geo-alt-fill" style={{ color: '#0EA5E9', fontSize: 13 }} /> {k}
+              </span>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -408,6 +460,24 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Ekosistem Zomet ── */}
+      <section style={{ padding: '72px 24px', borderTop: '1px solid #1E293B' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: '#0EA5E9', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Bukan Sekadar Aplikasi Baru</p>
+          <h2 style={{ fontSize: 'clamp(24px, 3.5vw, 34px)', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 14 }}>Ditenagai Ekosistem Zomet</h2>
+          <p style={{ fontSize: 15, color: '#94A3B8', maxWidth: 560, margin: '0 auto 36px', lineHeight: 1.7 }}>
+            Z-Trans dibangun di atas platform yang sama dengan aplikasi bisnis Zomet lainnya — satu akun (SSO), infrastruktur, dan keandalan yang sudah dipakai lintas jenis usaha.
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
+            {EKOSISTEM.map(a => (
+              <div key={a.nama} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#1E293B', border: '1px solid #334155', borderRadius: 12, padding: '10px 18px', fontSize: 14, fontWeight: 600, color: '#CBD5E1' }}>
+                <i className={`bi ${a.icon}`} style={{ color: '#0EA5E9' }} /> {a.nama}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Footer ── */}
       <footer style={{ borderTop: '1px solid #1E293B', padding: '32px 24px', textAlign: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}>
@@ -430,6 +500,33 @@ export default function LandingPage() {
         .nav-link:hover { color: #F1F5F9 !important; }
         @media (max-width: 640px) {
           .nav-link { display: none; }
+        }
+        .live-dot {
+          width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+          background: #FCD34D; display: inline-block;
+          animation: pulse 1.8s infinite;
+        }
+        @keyframes pulse {
+          0%   { box-shadow: 0 0 0 0 rgba(252,211,77,0.55); }
+          70%  { box-shadow: 0 0 0 8px rgba(252,211,77,0); }
+          100% { box-shadow: 0 0 0 0 rgba(252,211,77,0); }
+        }
+        .marquee-wrap {
+          display: flex; overflow: hidden; user-select: none;
+          -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+        }
+        .marquee-track {
+          display: inline-flex; white-space: nowrap;
+          animation: marquee 32s linear infinite;
+        }
+        @keyframes marquee {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .marquee-track { animation: none; }
+          .live-dot { animation: none; }
         }
       `}</style>
     </div>
